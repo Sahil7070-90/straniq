@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Straniq — Admin Panel</title>
+<meta name="robots" content="noindex,nofollow"/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#06060f;--s1:#0d0d1e;--s2:#13132b;--s3:#1a1a38;
+  --b1:#1e1e3a;--b2:#2a2a50;
+  --p1:#7c3aed;--p2:#a855f7;
+  --cy:#06b6d4;--gn:#10b981;--rd:#ef4444;--yw:#f59e0b;--or:#f97316;
+  --tx1:#f0f0ff;--tx2:#8888aa;--tx3:#4a4a6a;
+  --font:'Sora',sans-serif;--mono:'JetBrains Mono',monospace;
+  --grad:linear-gradient(135deg,var(--p1),var(--p2));
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--tx1);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px;}
+
+/* LOGIN */
+#login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;
+  background:radial-gradient(ellipse at 30% 40%,rgba(124,58,237,.08),transparent 55%),
+             radial-gradient(ellipse at 70% 70%,rgba(6,182,212,.05),transparent 55%),var(--bg);}
+.lc{background:var(--s1);border:1px solid var(--b1);border-radius:28px;padding:2.5rem;width:100%;max-width:380px;box-shadow:0 40px 100px rgba(0,0,0,.6);}
+.lc-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:24px;}
+.lc-ic{width:48px;height:48px;background:var(--grad);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 8px 28px rgba(124,58,237,.35);}
+.lc-nm{font-size:1.6rem;font-weight:900;letter-spacing:-1px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.lc h2{font-size:1rem;font-weight:600;text-align:center;margin-bottom:.3rem;}
+.lc p{color:var(--tx2);font-size:.82rem;text-align:center;margin-bottom:1.8rem;}
+.inp{width:100%;background:var(--bg);border:1.5px solid var(--b1);border-radius:12px;padding:13px 16px;color:var(--tx1);font-family:var(--font);font-size:.9rem;outline:none;transition:all .2s;margin-bottom:12px;}
+.inp:focus{border-color:var(--p1);box-shadow:0 0 0 3px rgba(124,58,237,.18);}
+.inp::placeholder{color:var(--tx3);}
+.lbtn{width:100%;background:var(--grad);color:#fff;border:none;border-radius:12px;padding:14px;font-family:var(--font);font-weight:700;font-size:.95rem;cursor:pointer;transition:all .2s;box-shadow:0 8px 24px rgba(124,58,237,.3);}
+.lbtn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(124,58,237,.5);}
+.lerr{color:var(--rd);font-size:.8rem;margin-top:8px;display:none;text-align:center;}
+.lsec-note{color:var(--tx3);font-size:.72rem;text-align:center;margin-top:14px;line-height:1.6;}
+
+/* DASHBOARD */
+#dash{display:none;min-height:100vh;}
+.adm-nav{
+  background:rgba(6,6,15,.92);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);
+  padding:0 24px;height:62px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.an-l{display:flex;align-items:center;gap:12px;}
+.an-logo{display:flex;align-items:center;gap:8px;}
+.an-ic{width:30px;height:30px;background:var(--grad);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:.95rem;}
+.an-nm{font-size:1.1rem;font-weight:900;color:var(--p2);}
+.an-badge{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;background:rgba(239,68,68,.12);color:var(--rd);border:1px solid rgba(239,68,68,.2);border-radius:6px;padding:2px 8px;}
+.live-tag{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.2);border-radius:100px;padding:4px 12px;font-size:.72rem;color:var(--gn);font-weight:700;}
+.ld{width:6px;height:6px;background:var(--gn);border-radius:50%;animation:ld 1.5s infinite;}
+@keyframes ld{0%,100%{opacity:1}50%{opacity:.3}}
+.an-r{display:flex;align-items:center;gap:8px;}
+.anb{padding:8px 16px;border-radius:9px;font-family:var(--font);font-size:.78rem;font-weight:600;cursor:pointer;transition:all .2s;border:none;}
+.anb-r{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);color:var(--p2);}
+.anb-r:hover{background:rgba(124,58,237,.2);}
+.anb-l{background:var(--s2);border:1px solid var(--b1);color:var(--tx2);}
+.upd-txt{color:var(--tx3);font-size:.7rem;}
+
+.adm-body{max-width:1300px;margin:0 auto;padding:24px;}
+
+/* TABS */
+.adm-tabs{display:flex;gap:4px;background:var(--s1);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content;}
+.adm-tab{padding:8px 18px;border:none;background:transparent;color:var(--tx2);border-radius:9px;cursor:pointer;font-family:var(--font);font-weight:600;font-size:.8rem;transition:all .2s;}
+.adm-tab.on{background:var(--grad);color:#fff;box-shadow:0 3px 12px rgba(124,58,237,.3);}
+
+.tab-content{display:none;}
+.tab-content.on{display:block;}
+
+/* STATS GRID */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.sc{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:18px;position:relative;overflow:hidden;transition:all .2s;}
+.sc:hover{border-color:var(--b2);transform:translateY(-2px);}
+.sc::after{content:attr(data-ic);position:absolute;top:12px;right:14px;font-size:1.5rem;opacity:.12;}
+.sc-l{color:var(--tx3);font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.sc-v{font-size:1.8rem;font-weight:900;letter-spacing:-1px;line-height:1;}
+.sc-sub{color:var(--tx3);font-size:.68rem;margin-top:4px;}
+.cv-p{color:var(--p2)}.cv-g{color:var(--gn)}.cv-y{color:var(--yw)}.cv-r{color:var(--rd)}.cv-c{color:var(--cy)}.cv-w{color:var(--tx1)}
+
+/* SERVER HEALTH */
+.health-card{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:18px;margin-bottom:16px;}
+.hc-title{font-size:.72rem;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.hc-status{font-size:.78rem;font-weight:700;color:var(--gn);}
+.mem-row{display:flex;justify-content:space-between;font-size:.76rem;color:var(--tx2);margin-bottom:5px;}
+.mem-bar{background:var(--bg);border-radius:100px;height:7px;overflow:hidden;}
+.mem-fill{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--p1),var(--cy));transition:width .5s;}
+.uptime-row{display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;}
+.ur-item{background:var(--bg);border:1px solid var(--b1);border-radius:10px;padding:8px 14px;text-align:center;min-width:80px;}
+.ur-val{font-size:1.1rem;font-weight:800;color:var(--p2);font-family:var(--mono);}
+.ur-lbl{font-size:.62rem;color:var(--tx3);text-transform:uppercase;margin-top:2px;}
+
+/* PANELS */
+.panel{background:var(--s1);border:1px solid var(--b1);border-radius:16px;padding:18px;margin-bottom:16px;}
+.panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;}
+.panel-title{font-size:.72rem;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:1px;}
+.panel-count{background:var(--s2);border:1px solid var(--b2);color:var(--tx2);padding:3px 10px;border-radius:7px;font-size:.7rem;font-weight:600;}
+
+/* SEARCH */
+.search-inp{background:var(--bg);border:1.5px solid var(--b1);border-radius:10px;padding:8px 12px;color:var(--tx1);font-family:var(--font);font-size:.8rem;outline:none;width:200px;transition:all .2s;}
+.search-inp:focus{border-color:var(--p1);}
+.search-inp::placeholder{color:var(--tx3);}
+
+/* TABLES */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:9px 11px;font-size:.65rem;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;border-bottom:1px solid var(--b1);font-weight:700;white-space:nowrap;}
+td{padding:10px 11px;font-size:.8rem;border-bottom:1px solid var(--b1);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.015);}
+.user-cell{display:flex;align-items:center;gap:8px;}
+.uav{width:28px;height:28px;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0;}
+.u-nm{font-weight:700;font-size:.82rem;}
+.u-em{color:var(--tx3);font-size:.68rem;}
+.tbadge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:.65rem;font-weight:700;white-space:nowrap;}
+.tb-g{background:rgba(16,185,129,.1);color:var(--gn);}
+.tb-r{background:rgba(239,68,68,.1);color:var(--rd);}
+.tb-y{background:rgba(245,158,11,.1);color:var(--yw);}
+.tb-p{background:rgba(124,58,237,.1);color:var(--p2);}
+.tb-c{background:rgba(6,182,212,.1);color:var(--cy);}
+.tb-gr{background:rgba(255,255,255,.06);color:var(--tx2);}
+.tact-row{display:flex;gap:4px;align-items:center;flex-wrap:wrap;}
+.ta-btn{padding:4px 10px;border-radius:7px;cursor:pointer;font-size:.68rem;font-weight:700;font-family:var(--font);transition:all .2s;border:none;white-space:nowrap;}
+.ta-ban{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--rd);}
+.ta-ban:hover{background:rgba(239,68,68,.2);}
+.ta-unban{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);color:var(--gn);}
+.ta-pro{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);color:var(--yw);}
+.ta-warn{background:rgba(249,115,22,.1);border:1px solid rgba(249,115,22,.2);color:var(--or);}
+.ta-del{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.15);color:var(--rd);}
+.ta-del:hover{background:rgba(239,68,68,.18);}
+
+/* QUICK LINKS */
+.qlinks{display:flex;gap:8px;flex-wrap:wrap;}
+.ql{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b1);color:var(--tx1);padding:9px 16px;border-radius:10px;text-decoration:none;font-size:.78rem;font-weight:500;transition:all .2s;cursor:pointer;}
+.ql:hover{border-color:var(--p2);color:var(--p2);}
+
+/* MOD LOG */
+.mod-row{background:var(--bg);border:1px solid var(--b1);border-radius:10px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mr-type{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.mr-type.text-mod{color:var(--yw);}
+.mr-type.video-mod{color:var(--rd);}
+.mr-detail{color:var(--tx2);font-size:.74rem;flex:1;}
+.mr-time{color:var(--tx3);font-size:.68rem;white-space:nowrap;}
+
+/* REVENUE */
+.rev-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.rs-card{background:var(--bg);border:1px solid var(--b1);border-radius:12px;padding:14px;text-align:center;}
+.rs-val{font-size:1.4rem;font-weight:900;color:var(--gn);}
+.rs-lbl{color:var(--tx3);font-size:.66rem;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
+/* TOAST */
+#adm-toast{position:fixed;top:16px;right:16px;z-index:999;display:flex;flex-direction:column;gap:6px;}
+.at{background:var(--s1);border:1px solid var(--b2);border-radius:12px;padding:11px 16px;font-size:.8rem;font-weight:500;transform:translateX(110%);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:7px;box-shadow:0 8px 28px rgba(0,0,0,.5);min-width:200px;}
+.at.in{transform:translateX(0);opacity:1;}
+.at.ok{border-color:var(--gn);color:var(--gn);}
+.at.err{border-color:var(--rd);color:var(--rd);}
+.at.info{border-color:var(--p1);color:var(--p2);}
+
+/* CONFIRM MODAL */
+.confirm-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(5px);}
+.confirm-bg.on{display:flex;}
+.confirm-box{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:24px;width:320px;box-shadow:0 30px 80px rgba(0,0,0,.7);}
+.cb-title{font-size:1rem;font-weight:700;margin-bottom:.3rem;}
+.cb-msg{color:var(--tx2);font-size:.82rem;margin-bottom:18px;line-height:1.6;}
+.cb-acts{display:flex;gap:8px;}
+.cb-cancel{flex:1;padding:11px;background:var(--s2);border:1px solid var(--b1);color:var(--tx1);border-radius:11px;font-family:var(--font);font-weight:700;font-size:.88rem;cursor:pointer;}
+.cb-ok{flex:1;padding:11px;border:none;border-radius:11px;font-family:var(--font);font-weight:700;font-size:.88rem;cursor:pointer;}
+.cb-ok.danger{background:var(--rd);color:#fff;}
+.cb-ok.ok{background:var(--grad);color:#fff;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .adm-body{padding:14px;}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:10px;}
+  .an-nm{display:none;}
+  .anb span{display:none;}
+  table{font-size:.76rem;}
+  td,th{padding:7px 8px;}
+  .rev-summary{grid-template-columns:1fr;}
+  .adm-tabs{overflow-x:auto;width:100%;}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:repeat(2,1fr);}
+  .sc-v{font-size:1.4rem;}
+  .search-inp{width:140px;}
+}
+</style>
+</head>
+<body>
+<div id="adm-toast"></div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-bg" id="confirm-bg">
+  <div class="confirm-box">
+    <div class="cb-title" id="cb-title">Confirm Action</div>
+    <p class="cb-msg" id="cb-msg">Are you sure?</p>
+    <div class="cb-acts">
+      <button class="cb-cancel" onclick="closeConfirm()">Cancel</button>
+      <button class="cb-ok danger" id="cb-ok" onclick="runConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="lc">
+    <div class="lc-logo">
+      <div class="lc-ic">⚡</div>
+      <div class="lc-nm">Straniq</div>
+    </div>
+    <h2>Admin Dashboard</h2>
+    <p>Enter admin password to continue</p>
+    <input class="inp" type="password" id="adm-pwd" placeholder="Admin password..." onkeydown="if(event.key==='Enter')admLogin()"/>
+    <button class="lbtn" onclick="admLogin()">Access Dashboard →</button>
+    <div class="lerr" id="adm-err">❌ Incorrect password.</div>
+    <p class="lsec-note">🔐 This page is for authorized personnel only.<br>All access attempts are logged.</p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dash">
+  <nav class="adm-nav">
+    <div class="an-l">
+      <div class="an-logo">
+        <div class="an-ic">⚡</div>
+        <div class="an-nm">Straniq</div>
+      </div>
+      <div class="an-badge">ADMIN</div>
+      <div class="live-tag"><div class="ld"></div>Live</div>
+      <span class="upd-txt" id="upd-time">Loading...</span>
+    </div>
+    <div class="an-r">
+      <button class="anb anb-r" onclick="loadAll()">🔄 <span>Refresh</span></button>
+      <button class="anb anb-l" onclick="admLogout()">← <span>Logout</span></button>
+    </div>
+  </nav>
+
+  <div class="adm-body">
+    <!-- TABS -->
+    <div class="adm-tabs">
+      <button class="adm-tab on" onclick="switchTab('overview')">📊 Overview</button>
+      <button class="adm-tab" onclick="switchTab('users')">👥 Users</button>
+      <button class="adm-tab" onclick="switchTab('reports')">🚩 Reports</button>
+      <button class="adm-tab" onclick="switchTab('revenue')">💰 Revenue</button>
+      <button class="adm-tab" onclick="switchTab('moderation')">🛡️ Moderation</button>
+      <button class="adm-tab" onclick="switchTab('settings')">⚙️ Settings</button>
+    </div>
+
+    <!-- ══ OVERVIEW TAB ══ -->
+    <div class="tab-content on" id="tab-overview">
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="sc" data-ic="👥"><div class="sc-l">Online Now</div><div class="sc-v cv-p" id="s-online">—</div><div class="sc-sub" id="s-queue">Queue: 0</div></div>
+        <div class="sc" data-ic="👤"><div class="sc-l">Total Users</div><div class="sc-v cv-g" id="s-users">—</div></div>
+        <div class="sc" data-ic="⭐"><div class="sc-l">Premium</div><div class="sc-v cv-y" id="s-prem">—</div></div>
+        <div class="sc" data-ic="💬"><div class="sc-l">Total Chats</div><div class="sc-v cv-c" id="s-chats">—</div></div>
+        <div class="sc" data-ic="🔗"><div class="sc-l">Connections</div><div class="sc-v cv-w" id="s-conn">—</div></div>
+        <div class="sc" data-ic="🚩"><div class="sc-l">Reports</div><div class="sc-v cv-r" id="s-reps">—</div></div>
+      </div>
+
+      <!-- Server Health -->
+      <div class="health-card">
+        <div class="hc-title">
+          <span>🖥️ Server Health</span>
+          <span class="hc-status" id="hc-status">✅ Healthy</span>
+        </div>
+        <div class="mem-row"><span>Memory Usage</span><span id="mem-txt">—</span></div>
+        <div class="mem-bar"><div class="mem-fill" id="mem-fill" style="width:0%"></div></div>
+        <div class="uptime-row" id="uptime-row"></div>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="panel">
+        <div class="panel-hdr"><div class="panel-title">🕐 Recent Reports</div></div>
+        <div id="recent-reports"><div style="color:var(--tx3);text-align:center;padding:20px;font-size:.85rem;">Loading...</div></div>
+      </div>
+
+      <!-- Quick Links -->
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:12px;">🔗 Quick Links</div>
+        <div class="qlinks">
+          <div class="ql" onclick="window.open('/','_blank')">🌐 Visit Straniq</div>
+          <div class="ql" onclick="window.open('https://dashboard.render.com','_blank')">☁️ Render</div>
+          <div class="ql" onclick="window.open('https://uptimerobot.com','_blank')">📡 UptimeRobot</div>
+          <div class="ql" onclick="window.open('https://dashboard.razorpay.com','_blank')">💳 Razorpay</div>
+          <div class="ql" onclick="window.open('https://analytics.google.com','_blank')">📊 Analytics</div>
+          <div class="ql" onclick="window.open('https://www.sightengine.com/dashboard','_blank')">🛡️ Sightengine</div>
+          <div class="ql" onclick="window.open('https://app.fast2sms.com','_blank')">📱 Fast2SMS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ USERS TAB ══ -->
+    <div class="tab-content" id="tab-users">
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">👥 All Users</div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input class="search-inp" id="user-search" placeholder="Search users..." oninput="filterUsers()"/>
+            <select class="search-inp" id="user-filter" onchange="filterUsers()" style="width:130px;">
+              <option value="all">All Users</option>
+              <option value="premium">⭐ Premium</option>
+              <option value="banned">🚫 Banned</option>
+              <option value="verified">✅ Verified</option>
+              <option value="unverified">⚠️ Unverified</option>
+            </select>
+            <div class="panel-count" id="users-count">0 users</div>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Contact</th>
+                <th>Status</th>
+                <th>Plan</th>
+                <th>Chats</th>
+                <th>Warns</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody">
+              <tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:24px;">Loading users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REPORTS TAB ══ -->
+    <div class="tab-content" id="tab-reports">
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">🚩 User Reports</div>
+          <div class="panel-count" id="rep-count">0 reports</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Reason</th><th>Details</th><th>Reporter</th><th>Time</th><th>Action</th></tr>
+            </thead>
+            <tbody id="rep-tbody">
+              <tr><td colspan="6" style="text-align:center;color:var(--tx3);padding:24px;">Loading reports...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ REVENUE TAB ══ -->
+    <div class="tab-content" id="tab-revenue">
+      <div class="rev-summary">
+        <div class="rs-card"><div class="rs-val" id="rv-total">₹0</div><div class="rs-lbl">Total Revenue</div></div>
+        <div class="rs-card"><div class="rs-val" id="rv-txns">0</div><div class="rs-lbl">Transactions</div></div>
+        <div class="rs-card"><div class="rs-val" id="rv-prem">0</div><div class="rs-lbl">Premium Users</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:14px;">💳 Payment History</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>User ID</th><th>Plan</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+            </thead>
+            <tbody id="pay-tbody">
+              <tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:24px;">Loading payments...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ MODERATION TAB ══ -->
+    <div class="tab-content" id="tab-moderation">
+      <div class="panel">
+        <div class="panel-hdr">
+          <div class="panel-title">🛡️ AI Moderation Log</div>
+          <div class="panel-count" id="mod-count">0 events</div>
+        </div>
+        <div id="mod-log-container">
+          <div style="color:var(--tx3);text-align:center;padding:24px;font-size:.85rem;">Loading moderation log...</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:14px;">⚙️ Moderation Settings</div>
+        <div style="display:grid;gap:10px;max-width:500px;">
+          <div style="background:var(--bg);border:1px solid var(--b1);border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">AI Video Moderation</div><div style="font-size:.72rem;color:var(--tx2);margin-top:2px;">Sightengine API — auto-detect nudity/violence</div></div>
+            <span id="sightengine-status" class="tbadge tb-gr">Checking...</span>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--b1);border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">Text Content Filter</div><div style="font-size:.72rem;color:var(--tx2);margin-top:2px;">Keyword-based profanity filter — always active</div></div>
+            <span class="tbadge tb-g">✅ Active</span>
+          </div>
+          <div style="background:var(--bg);border:1px solid var(--b1);border-radius:12px;padding:14px;display:flex;align-items:center;justify-content:space-between;">
+            <div><div style="font-size:.85rem;font-weight:600;">Auto-Ban (3 warnings)</div><div style="font-size:.72rem;color:var(--tx2);margin-top:2px;">Users get auto-banned after 3 content violations</div></div>
+            <span class="tbadge tb-g">✅ Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ SETTINGS TAB ══ -->
+    <div class="tab-content" id="tab-settings">
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:14px;">⚙️ Environment Variables Status</div>
+        <div style="display:grid;gap:8px;" id="env-status">
+          <div style="color:var(--tx3);text-align:center;padding:20px;font-size:.85rem;">Loading...</div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title" style="margin-bottom:14px;">🔐 Admin Password</div>
+        <div style="max-width:360px;">
+          <input class="search-inp" type="password" id="new-pwd" placeholder="New admin password..." style="width:100%;margin-bottom:8px;padding:11px 14px;"/>
+          <button class="anb anb-r" style="width:100%;padding:11px;" onclick="changePwd()">Update Password</button>
+          <p style="color:var(--tx3);font-size:.72rem;margin-top:8px;">Note: Changes require server restart to take effect. Update ADMIN_PASSWORD in Render environment variables.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let admPwd = "";
+let allUsers = [];
+let confirmCallback = null;
+const ADMIN_PATH = window.location.pathname.split("/").filter(Boolean)[0] || "";
+
+// ═══════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════
+function toast(msg, type = "info") {
+  const c = document.getElementById("adm-toast");
+  const el = document.createElement("div");
+  el.className = `at ${type}`;
+  const ic = { ok:"✅", err:"❌", info:"ℹ️" };
+  el.innerHTML = `<span>${ic[type]||"ℹ️"}</span><span>${msg}</span>`;
+  c.appendChild(el);
+  requestAnimationFrame(() => el.classList.add("in"));
+  setTimeout(() => { el.classList.remove("in"); setTimeout(() => el.remove(), 400); }, 4000);
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIRM
+// ═══════════════════════════════════════════════════════
+function confirm2(title, msg, cb, type = "danger") {
+  document.getElementById("cb-title").textContent = title;
+  document.getElementById("cb-msg").textContent = msg;
+  document.getElementById("cb-ok").className = `cb-ok ${type}`;
+  document.getElementById("cb-ok").textContent = type === "danger" ? "Confirm" : "OK";
+  confirmCallback = cb;
+  document.getElementById("confirm-bg").classList.add("on");
+}
+function closeConfirm() { document.getElementById("confirm-bg").classList.remove("on"); confirmCallback = null; }
+function runConfirm() { closeConfirm(); if (confirmCallback) confirmCallback(); }
+
+// ═══════════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════════
+async function admLogin() {
+  const pwd = document.getElementById("adm-pwd").value;
+  if (!pwd) return;
+  admPwd = pwd;
+  const ok = await loadAll(true);
+  if (!ok) {
+    document.getElementById("adm-err").style.display = "block";
+    admPwd = "";
+    document.getElementById("adm-pwd").value = "";
+  }
+}
+
+function admLogout() {
+  admPwd = "";
+  document.getElementById("dash").style.display = "none";
+  document.getElementById("login-page").style.display = "flex";
+  document.getElementById("adm-pwd").value = "";
+}
+
+// ═══════════════════════════════════════════════════════
+// LOAD DASHBOARD
+// ═══════════════════════════════════════════════════════
+async function loadAll(isLogin = false) {
+  try {
+    const r = await fetch(`/api/${ADMIN_PATH}/dashboard`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Pass": admPwd },
+      body: JSON.stringify({ adminPassword: admPwd })
+    });
+    if (r.status === 401) return false;
+    const d = await r.json();
+
+    if (isLogin) {
+      document.getElementById("login-page").style.display = "none";
+      document.getElementById("dash").style.display = "block";
+    }
+
+    renderStats(d);
+    renderUsers(d.userList || []);
+    renderReports(d.reports || []);
+    renderPayments(d.payments || [], d.stats);
+    renderModLog(d.modLog || []);
+    renderHealth(d.server, d.live);
+    renderEnvStatus(d);
+    document.getElementById("upd-time").textContent = "Updated: " + new Date().toLocaleTimeString("en-US");
+    return true;
+  } catch (e) {
+    console.error("Load error:", e);
+    return false;
+  }
+}
+
+function renderStats(d) {
+  const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  set("s-online", d.live?.onlineNow ?? d.onlineNow ?? 0);
+  set("s-queue", `Queue: ${(d.live?.waitingVideo??0)+(d.live?.waitingText??0)}`);
+  set("s-users", d.stats?.totalUsers ?? d.totalUsers ?? 0);
+  set("s-prem", d.stats?.totalPremium ?? d.premiumUsers ?? 0);
+  set("s-chats", d.stats?.totalChats ?? d.totalChats ?? 0);
+  set("s-conn", d.stats?.totalConnections ?? d.totalConnections ?? 0);
+  set("s-reps", d.stats?.totalReports ?? d.reports?.length ?? 0);
+}
+
+function renderHealth(server, live) {
+  if (!server) return;
+  const pct = server.memory?.percent || 0;
+  document.getElementById("mem-txt").textContent = `${server.memory?.used||0}MB / ${server.memory?.total||0}MB (${pct}%)`;
+  document.getElementById("mem-fill").style.width = pct + "%";
+  if (pct > 85) document.getElementById("hc-status").textContent = "⚠️ High Memory";
+  else document.getElementById("hc-status").textContent = "✅ Healthy";
+
+  const up = server.uptime || 0;
+  const d = Math.floor(up/86400), h = Math.floor((up%86400)/3600), m = Math.floor((up%3600)/60), s = Math.floor(up%60);
+  document.getElementById("uptime-row").innerHTML = `
+    <div class="ur-item"><div class="ur-val">${d}</div><div class="ur-lbl">Days</div></div>
+    <div class="ur-item"><div class="ur-val">${h}</div><div class="ur-lbl">Hours</div></div>
+    <div class="ur-item"><div class="ur-val">${m}</div><div class="ur-lbl">Mins</div></div>
+    <div class="ur-item"><div class="ur-val">${s}</div><div class="ur-lbl">Secs</div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// USERS
+// ═══════════════════════════════════════════════════════
+function renderUsers(users) {
+  allUsers = users;
+  filterUsers();
+}
+
+function filterUsers() {
+  const q = (document.getElementById("user-search")?.value || "").toLowerCase();
+  const filter = document.getElementById("user-filter")?.value || "all";
+  let filtered = allUsers;
+  if (q) filtered = filtered.filter(u => u.username?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+  if (filter === "premium") filtered = filtered.filter(u => u.isPremium);
+  if (filter === "banned") filtered = filtered.filter(u => u.isBanned);
+  if (filter === "verified") filtered = filtered.filter(u => u.isEmailVerified || u.isPhoneVerified);
+  if (filter === "unverified") filtered = filtered.filter(u => !u.isEmailVerified && !u.isPhoneVerified);
+
+  document.getElementById("users-count").textContent = `${filtered.length} users`;
+  const tbody = document.getElementById("users-tbody");
+  if (!filtered.length) { tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--tx3);padding:24px;">No users found.</td></tr>`; return; }
+
+  tbody.innerHTML = filtered.map(u => `
+    <tr>
+      <td>
+        <div class="user-cell">
+          <div class="uav">${u.avatar||u.username?.[0]?.toUpperCase()||"?"}</div>
+          <div><div class="u-nm">${u.username||"?"}</div><div class="u-em">${u.id?.slice(0,8)}...</div></div>
+        </div>
+      </td>
+      <td style="font-size:.72rem;color:var(--tx2);">${u.email||u.phone||"—"}</td>
+      <td>
+        <span class="tbadge ${u.isBanned?'tb-r':'tb-g'}">${u.isBanned?'🚫 Banned':'✅ Active'}</span>
+        ${(u.isEmailVerified||u.isPhoneVerified)?'<span class="tbadge tb-c" style="margin-left:3px;">✅ Verified</span>':'<span class="tbadge tb-gr" style="margin-left:3px;">Unverified</span>'}
+      </td>
+      <td><span class="tbadge ${u.isPremium?'tb-y':'tb-gr'}">${u.isPremium?'⭐ Pro':'Free'}</span></td>
+      <td style="font-family:var(--mono);font-size:.76rem;">${u.totalChats||0}</td>
+      <td style="font-family:var(--mono);font-size:.76rem;color:${(u.warnCount||0)>0?'var(--yw)':'var(--tx3)'};">${u.warnCount||0}</td>
+      <td style="color:var(--tx3);font-size:.72rem;">${u.joinedAt?new Date(u.joinedAt).toLocaleDateString("en-IN",{day:"2-digit",month:"short",year:"2-digit"}):"—"}</td>
+      <td>
+        <div class="tact-row">
+          <button class="ta-btn ${u.isBanned?'ta-unban':'ta-ban'}" onclick="toggleBan('${u.id}','${u.username}',${u.isBanned})">${u.isBanned?'Unban':'Ban'}</button>
+          <button class="ta-btn ta-warn" onclick="warnUser('${u.id}','${u.username}')">Warn</button>
+          ${!u.isPremium?`<button class="ta-btn ta-pro" onclick="grantPro('${u.id}','${u.username}')">⭐ Pro</button>`:''}
+        </div>
+      </td>
+    </tr>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════
+// REPORTS
+// ═══════════════════════════════════════════════════════
+function renderReports(reports) {
+  document.getElementById("rep-count").textContent = `${reports.length} reports`;
+  const recentDiv = document.getElementById("recent-reports");
+
+  const tbody = document.getElementById("rep-tbody");
+  if (!reports.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--gn);padding:24px;">✅ No reports — all clear!</td></tr>`;
+    if (recentDiv) recentDiv.innerHTML = `<div style="color:var(--gn);font-size:.85rem;text-align:center;padding:16px;">✅ No pending reports</div>`;
+    return;
+  }
+
+  const rev = [...reports].reverse();
+  tbody.innerHTML = rev.map((r, i) => `
+    <tr>
+      <td style="color:var(--tx3);">${rev.length-i}</td>
+      <td><span class="tbadge tb-y">⚠️ ${r.reason}</span></td>
+      <td style="color:var(--tx2);font-size:.74rem;max-width:180px;overflow:hidden;text-overflow:ellipsis;">${r.details||"—"}</td>
+      <td style="color:var(--tx2);">${r.reporterName||"Anonymous"}</td>
+      <td style="color:var(--tx3);font-size:.7rem;">${new Date(r.createdAt).toLocaleString("en-IN",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"})}</td>
+      <td><button class="ta-btn ta-del" onclick="deleteReport('${r.id}')">🗑 Dismiss</button></td>
+    </tr>`).join("");
+
+  // Recent reports on overview
+  if (recentDiv) {
+    recentDiv.innerHTML = rev.slice(0,5).map(r => `
+      <div class="mod-row">
+        <span class="mr-type text-mod">🚩 ${r.reason}</span>
+        <span class="mr-detail">${r.details||"No details"}</span>
+        <span class="mr-time">${new Date(r.createdAt).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}</span>
+        <button class="ta-btn ta-del" onclick="deleteReport('${r.id}')">Dismiss</button>
+      </div>`).join("");
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// REVENUE
+// ═══════════════════════════════════════════════════════
+function renderPayments(payments, stats) {
+  if (!payments) return;
+  const success = payments.filter(p => p.status === "success");
+  const revenue = success.reduce((s, p) => s + p.amount, 0);
+  document.getElementById("rv-total").textContent = "₹" + (revenue/100).toLocaleString("en-IN");
+  document.getElementById("rv-txns").textContent = success.length;
+  document.getElementById("rv-prem").textContent = stats?.totalPremium || 0;
+
+  const tbody = document.getElementById("pay-tbody");
+  if (!payments.length) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--tx3);padding:24px;">No payment records.</td></tr>`; return; }
+  tbody.innerHTML = payments.slice(0,20).map(p => `
+    <tr>
+      <td style="font-family:var(--mono);font-size:.7rem;color:var(--tx2);">${p.userId?.slice(0,10)||"—"}...</td>
+      <td><span class="tbadge tb-y">${p.plan||"—"}</span></td>
+      <td style="color:var(--gn);font-weight:700;">₹${(p.amount/100).toFixed(2)}</td>
+      <td><span class="tbadge ${p.status==='success'?'tb-g':'tb-r'}">${p.status}</span></td>
+      <td style="color:var(--tx3);font-size:.72rem;">${new Date(p.createdAt).toLocaleDateString("en-IN")}</td>
+    </tr>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════
+// MODERATION LOG
+// ═══════════════════════════════════════════════════════
+function renderModLog(log) {
+  document.getElementById("mod-count").textContent = `${log.length} events`;
+  const container = document.getElementById("mod-log-container");
+  if (!log.length) { container.innerHTML = `<div style="color:var(--gn);text-align:center;padding:24px;font-size:.85rem;">✅ No moderation events</div>`; return; }
+  container.innerHTML = log.map(e => `
+    <div class="mod-row">
+      <span class="mr-type ${e.type==='video'?'video-mod':'text-mod'}">${e.type==='video'?'📹':'💬'} ${e.type}</span>
+      <span class="mr-detail">${e.details||"—"} · ${e.action} · Confidence: ${((e.confidence||0)*100).toFixed(0)}%</span>
+      <span class="mr-time">${new Date(e.time).toLocaleTimeString("en-US",{hour:"2-digit",minute:"2-digit"})}</span>
+    </div>`).join("");
+
+  // Sightengine status
+  const seStatus = document.getElementById("sightengine-status");
+  if (seStatus) {
+    // If moderation is happening, it's active
+    if (log.length > 0) { seStatus.textContent = "✅ Active"; seStatus.className = "tbadge tb-g"; }
+    else { seStatus.textContent = "⚠️ Not configured"; seStatus.className = "tbadge tb-y"; }
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ENV STATUS
+// ═══════════════════════════════════════════════════════
+function renderEnvStatus(d) {
+  // We can only tell what's configured by what's working
+  const container = document.getElementById("env-status");
+  const vars = [
+    { name:"JWT_SECRET", desc:"Token security", required:true, hint:"Set in Render environment" },
+    { name:"ADMIN_PASSWORD", desc:"Admin panel access", required:true, hint:"Set in Render environment" },
+    { name:"EMAIL_USER + EMAIL_PASS", desc:"Gmail SMTP for email OTP", required:false, hint:"Google App Password" },
+    { name:"FAST2SMS_API_KEY", desc:"Phone OTP (India SMS)", required:false, hint:"fast2sms.com API key" },
+    { name:"SIGHTENGINE_USER + SECRET", desc:"AI content moderation", required:false, hint:"sightengine.com" },
+    { name:"RAZORPAY_KEY_ID + SECRET", desc:"Payment processing", required:false, hint:"Razorpay dashboard" },
+    { name:"ADMIN_SECRET_PATH", desc:"Admin panel hidden URL", required:true, hint:"Keep this secret!" },
+  ];
+  container.innerHTML = vars.map(v => `
+    <div style="background:var(--bg);border:1px solid var(--b1);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <div>
+        <div style="font-size:.84rem;font-weight:600;font-family:var(--mono);">${v.name}</div>
+        <div style="font-size:.72rem;color:var(--tx2);margin-top:2px;">${v.desc} · <span style="color:var(--tx3);">${v.hint}</span></div>
+      </div>
+      <span class="tbadge ${v.required?'tb-r':'tb-gr'}">${v.required?'Required':'Optional'}</span>
+    </div>`).join("");
+}
+
+// ═══════════════════════════════════════════════════════
+// ADMIN ACTIONS
+// ═══════════════════════════════════════════════════════
+async function admPost(endpoint, body) {
+  const r = await fetch(`/api/${ADMIN_PATH}/${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Admin-Pass": admPwd },
+    body: JSON.stringify({ adminPassword: admPwd, ...body })
+  });
+  return r.json();
+}
+
+function toggleBan(userId, username, isBanned) {
+  const action = isBanned ? "unban" : "ban";
+  confirm2(
+    `${action.charAt(0).toUpperCase()+action.slice(1)} User`,
+    `Are you sure you want to ${action} "${username}"?`,
+    async () => {
+      const d = await admPost("ban", { userId, reason: "Community guidelines violation" });
+      if (d.success) { toast(`${d.action === "banned" ? "🚫 Banned" : "✅ Unbanned"}: ${username}`, d.action === "banned" ? "err" : "ok"); await loadAll(); }
+      else toast(d.error || "Action failed", "err");
+    }
+  );
+}
+
+function warnUser(userId, username) {
+  confirm2("Warn User", `Issue a warning to "${username}"? After 3 warnings they will be auto-banned.`, async () => {
+    const d = await admPost("warn", { userId });
+    if (d.success) { toast(`⚠️ Warning issued to ${username}. Total: ${d.warnCount}/3${d.autoBanned?" — AUTO BANNED!":""}`, "info"); await loadAll(); }
+    else toast(d.error || "Action failed", "err");
+  });
+}
+
+function grantPro(userId, username) {
+  confirm2("Grant Premium", `Give 30 days free Pro to "${username}"?`, async () => {
+    const d = await admPost("grant-premium", { userId, days: 30 });
+    if (d.success) { toast(`⭐ Pro granted to ${username}`, "ok"); await loadAll(); }
+    else toast(d.error, "err");
+  }, "ok");
+}
+
+async function deleteReport(reportId) {
+  const d = await admPost("delete-report", { reportId });
+  if (d.success) { toast("✅ Report dismissed", "ok"); await loadAll(); }
+  else toast(d.error, "err");
+}
+
+function changePwd() {
+  const newPwd = document.getElementById("new-pwd")?.value;
+  if (!newPwd || newPwd.length < 8) { toast("Password must be at least 8 characters.", "err"); return; }
+  toast("Update ADMIN_PASSWORD in Render environment variables and restart the server.", "info");
+  document.getElementById("new-pwd").value = "";
+}
+
+// ═══════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll(".tab-content").forEach(t => t.classList.remove("on"));
+  document.querySelectorAll(".adm-tab").forEach(b => b.classList.remove("on"));
+  const tabEl = document.getElementById("tab-" + tab);
+  if (tabEl) tabEl.classList.add("on");
+  const tabs = document.querySelectorAll(".adm-tab");
+  const tabMap = { overview:0, users:1, reports:2, revenue:3, moderation:4, settings:5 };
+  if (tabs[tabMap[tab]]) tabs[tabMap[tab]].classList.add("on");
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTO REFRESH
+// ═══════════════════════════════════════════════════════
+setInterval(() => {
+  if (admPwd && document.getElementById("dash").style.display !== "none") loadAll();
+}, 20000);
+</script>
+</body>
+</html>
