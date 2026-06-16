@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Straniq — Meet Strangers Instantly</title>
+<meta name="description" content="Straniq - Free, safe random video and text chat with strangers worldwide."/>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#06060f;--s1:#0d0d1e;--s2:#13132b;--s3:#1a1a38;
+  --b1:#1e1e3a;--b2:#2a2a50;
+  --p1:#7c3aed;--p2:#a855f7;
+  --cy:#06b6d4;--gn:#10b981;--rd:#ef4444;--yw:#f59e0b;--or:#f97316;
+  --tx1:#f0f0ff;--tx2:#8888aa;--tx3:#4a4a6a;
+  --font:'Sora',sans-serif;
+  --grad:linear-gradient(135deg,var(--p1),var(--p2));
+  --grad-cy:linear-gradient(135deg,var(--cy),#22d3ee);
+  --grad-yw:linear-gradient(135deg,var(--yw),var(--or));
+  --r:14px;--r2:20px;--r3:28px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{background:var(--bg);color:var(--tx1);font-family:var(--font);overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px;}
+
+/* ── BG MESH ── */
+.mesh{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.mesh::before{content:'';position:absolute;width:600px;height:600px;top:-150px;left:-150px;background:radial-gradient(circle,rgba(124,58,237,.07),transparent 65%);animation:m1 18s ease-in-out infinite alternate;}
+.mesh::after{content:'';position:absolute;width:500px;height:500px;bottom:-100px;right:-100px;background:radial-gradient(circle,rgba(6,182,212,.05),transparent 65%);animation:m2 20s ease-in-out infinite alternate;}
+@keyframes m1{0%{transform:translate(0,0)}100%{transform:translate(80px,60px)}}
+@keyframes m2{0%{transform:translate(0,0)}100%{transform:translate(-60px,-80px)}}
+
+/* ── TOAST ── */
+#toasts{position:fixed;top:20px;right:16px;left:16px;z-index:9999;display:flex;flex-direction:column;gap:6px;pointer-events:none;max-width:360px;margin-left:auto;}
+.toast{background:var(--s1);border:1px solid var(--b2);border-radius:var(--r);padding:12px 16px;font-size:.82rem;font-weight:500;transform:translateX(110%);opacity:0;transition:all .35s cubic-bezier(.34,1.56,.64,1);display:flex;align-items:center;gap:8px;box-shadow:0 16px 50px rgba(0,0,0,.6);pointer-events:auto;}
+.toast.in{transform:translateX(0);opacity:1;}
+.toast.ok{border-color:var(--gn);color:var(--gn);}
+.toast.err{border-color:var(--rd);color:var(--rd);}
+.toast.info{border-color:var(--p1);color:var(--p2);}
+.toast.warn{border-color:var(--yw);color:var(--yw);}
+
+/* ── PAGES ── */
+.pg{display:none;position:relative;z-index:1;}
+.pg.on{display:flex;}
+.pg-full{min-height:100dvh;flex-direction:column;}
+
+/* ══════════════════════════════════════
+   SPLASH
+══════════════════════════════════════ */
+#splash{min-height:100dvh;align-items:center;justify-content:center;flex-direction:column;background:var(--bg);}
+.splash-aura{position:absolute;width:350px;height:350px;background:radial-gradient(circle,rgba(124,58,237,.25),transparent 70%);border-radius:50%;animation:sAura 2.5s ease-in-out infinite;}
+@keyframes sAura{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.15);opacity:.4}}
+.splash-icon{width:88px;height:88px;background:var(--grad);border-radius:26px;display:flex;align-items:center;justify-content:center;font-size:2.8rem;z-index:1;box-shadow:0 24px 70px rgba(124,58,237,.45);animation:bounce 2.5s ease-in-out infinite;margin-bottom:18px;}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+.splash-name{font-size:2.6rem;font-weight:900;letter-spacing:-2px;color:var(--p2);z-index:1;}
+.splash-tag{color:var(--tx2);font-size:.9rem;margin-top:6px;z-index:1;}
+.splash-dots{position:absolute;bottom:90px;display:flex;gap:6px;}
+.sdot{width:8px;height:8px;background:var(--p2);border-radius:50%;animation:sd .8s infinite;}
+.sdot:nth-child(2){animation-delay:.15s;}
+.sdot:nth-child(3){animation-delay:.3s;}
+@keyframes sd{0%,100%{transform:scale(.5);opacity:.3}50%{transform:scale(1);opacity:1}}
+
+/* ══════════════════════════════════════
+   AUTH
+══════════════════════════════════════ */
+#auth{background:var(--bg);overflow-y:auto;}
+.auth-top{text-align:center;padding:60px 24px 16px;}
+.auth-logo{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px;}
+.al-ic{width:46px;height:46px;background:var(--grad);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;box-shadow:0 8px 28px rgba(124,58,237,.35);}
+.al-nm{font-size:1.9rem;font-weight:900;letter-spacing:-1.5px;color:var(--p2);}
+.auth-h1{font-size:clamp(1.8rem,6vw,2.6rem);font-weight:900;letter-spacing:-1.5px;line-height:1.05;margin-bottom:.5rem;}
+.auth-h1 span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.auth-sub{color:var(--tx2);font-size:.9rem;margin-bottom:14px;}
+.online-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.22);border-radius:100px;padding:6px 14px;font-size:.76rem;color:var(--gn);font-weight:600;}
+.blink{width:7px;height:7px;background:var(--gn);border-radius:50%;animation:bl 2s infinite;}
+@keyframes bl{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+
+.auth-wrap{padding:16px 18px 36px;}
+.auth-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r3);padding:20px;}
+.tabs{display:flex;background:var(--bg);border-radius:var(--r);padding:4px;gap:4px;margin-bottom:18px;}
+.tab-btn{flex:1;padding:9px;border:none;background:transparent;color:var(--tx3);border-radius:10px;cursor:pointer;font-family:var(--font);font-weight:600;font-size:.82rem;transition:all .2s;}
+.tab-btn.on{background:var(--grad);color:#fff;box-shadow:0 4px 14px rgba(124,58,237,.3);}
+
+.fg{margin-bottom:13px;}
+.fl{display:block;font-size:.7rem;color:var(--tx2);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.iw{position:relative;}
+.ii{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.9rem;color:var(--tx3);pointer-events:none;}
+.fi{width:100%;background:var(--bg);border:1.5px solid var(--b1);border-radius:var(--r);padding:12px 12px 12px 36px;color:var(--tx1);font-family:var(--font);font-size:.88rem;outline:none;transition:all .2s;}
+.fi:focus{border-color:var(--p1);box-shadow:0 0 0 3px rgba(124,58,237,.18);}
+.fi::placeholder{color:var(--tx3);}
+.fi.err-field{border-color:var(--rd);}
+
+.tab-hint{font-size:.72rem;color:var(--tx3);text-align:center;margin-bottom:14px;}
+.tab-hint span{color:var(--p2);cursor:pointer;}
+
+.btn-main{width:100%;background:var(--grad);color:#fff;border:none;border-radius:var(--r);padding:14px;font-family:var(--font);font-weight:700;font-size:.93rem;cursor:pointer;transition:all .25s;box-shadow:0 8px 24px rgba(124,58,237,.3);margin-bottom:10px;}
+.btn-main:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(124,58,237,.5);}
+.btn-main:active{transform:scale(.98);}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.btn-outline{width:100%;background:transparent;color:var(--tx2);border:1.5px solid var(--b2);border-radius:var(--r);padding:12px;font-family:var(--font);font-size:.88rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:7px;}
+.btn-outline:hover{border-color:var(--p2);color:var(--tx1);}
+.dor{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--tx3);font-size:.76rem;}
+.dor::before,.dor::after{content:'';flex:1;height:1px;background:var(--b1);}
+.tos{text-align:center;color:var(--tx3);font-size:.68rem;margin-top:10px;line-height:1.6;}
+.tos a{color:var(--p2);text-decoration:none;}
+
+/* ── OTP Screen ── */
+#otp-screen{background:var(--bg);align-items:center;justify-content:center;flex-direction:column;padding:24px;text-align:center;min-height:100dvh;}
+.otp-icon{font-size:3.5rem;margin-bottom:16px;animation:bounce 2s infinite;}
+.otp-title{font-size:1.5rem;font-weight:800;letter-spacing:-.5px;margin-bottom:.5rem;}
+.otp-sub{color:var(--tx2);font-size:.88rem;line-height:1.6;margin-bottom:24px;max-width:300px;}
+.otp-inputs{display:flex;gap:10px;margin-bottom:20px;}
+.otp-inp{width:48px;height:56px;background:var(--s1);border:2px solid var(--b1);border-radius:12px;text-align:center;font-size:1.4rem;font-weight:700;color:var(--tx1);font-family:var(--font);outline:none;transition:all .2s;}
+.otp-inp:focus{border-color:var(--p1);box-shadow:0 0 0 3px rgba(124,58,237,.2);}
+.otp-inp.filled{border-color:var(--p2);}
+.otp-resend{color:var(--tx3);font-size:.8rem;margin-bottom:20px;}
+.otp-resend span{color:var(--p2);cursor:pointer;font-weight:600;}
+.otp-timer{color:var(--yw);font-weight:600;}
+
+/* ══════════════════════════════════════
+   HOME
+══════════════════════════════════════ */
+#home{background:var(--bg);flex-direction:column;}
+.nav{height:58px;padding:0 16px;background:rgba(6,6,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;z-index:20;position:sticky;top:0;}
+.nav-brand{display:flex;align-items:center;gap:8px;}
+.nb-ic{width:30px;height:30px;background:var(--grad);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1rem;}
+.nb-nm{font-size:1.05rem;font-weight:900;letter-spacing:-.5px;color:var(--p2);}
+.nav-r{display:flex;align-items:center;gap:8px;}
+.nav-av{width:30px;height:30px;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.82rem;cursor:pointer;position:relative;}
+.nav-vbadge{position:absolute;bottom:-2px;right:-2px;width:10px;height:10px;background:var(--gn);border-radius:50%;border:2px solid var(--bg);}
+.nav-badge{padding:2px 8px;border-radius:6px;font-size:.6rem;font-weight:700;text-transform:uppercase;}
+.nb-free{background:rgba(255,255,255,.06);color:var(--tx2);}
+.nb-pro{background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(249,115,22,.18));color:var(--yw);border:1px solid rgba(245,158,11,.3);}
+.nb-unv{background:rgba(239,68,68,.12);color:var(--rd);}
+.ibtn{width:30px;height:30px;background:var(--s2);border:none;color:var(--tx2);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.85rem;transition:all .2s;}
+.ibtn:hover{color:var(--tx1);background:var(--b1);}
+
+.home-body{flex:1;overflow-y:auto;padding:18px 18px 30px;}
+.unv-banner{background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.2);border-radius:var(--r2);padding:12px 16px;display:flex;align-items:center;gap:10px;margin-bottom:16px;cursor:pointer;}
+.unv-icon{font-size:1.4rem;flex-shrink:0;}
+.unv-text{flex:1;}
+.unv-title{font-size:.85rem;font-weight:700;color:var(--rd);margin-bottom:2px;}
+.unv-sub{font-size:.74rem;color:var(--tx2);}
+.unv-arrow{color:var(--rd);font-size:.9rem;}
+
+.home-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.25);border-radius:100px;padding:5px 13px;font-size:.7rem;color:var(--p2);font-weight:600;margin-bottom:14px;}
+.home-h1{font-size:clamp(1.8rem,6vw,2.6rem);font-weight:900;letter-spacing:-1.5px;line-height:1.05;margin-bottom:.6rem;}
+.home-h1 .gr{background:linear-gradient(135deg,var(--p2),var(--cy));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.home-sub{color:var(--tx2);font-size:.85rem;margin-bottom:22px;line-height:1.6;}
+
+.mode-cards{display:flex;flex-direction:column;gap:12px;margin-bottom:18px;}
+.mc{background:var(--s1);border:1.5px solid var(--b1);border-radius:var(--r2);padding:18px;cursor:pointer;transition:all .3s cubic-bezier(.34,1.56,.64,1);position:relative;overflow:hidden;}
+.mc-glow{position:absolute;inset:0;opacity:0;transition:opacity .3s;pointer-events:none;}
+.mc.vc .mc-glow{background:radial-gradient(ellipse at 50% 0%,rgba(124,58,237,.2),transparent 65%);}
+.mc.tc .mc-glow{background:radial-gradient(ellipse at 50% 0%,rgba(6,182,212,.15),transparent 65%);}
+.mc:active{transform:scale(.97);}
+.mc:active .mc-glow{opacity:1;}
+.mc-inner{display:flex;align-items:center;gap:14px;}
+.mc-icon{font-size:2.2rem;flex-shrink:0;}
+.mc-txt{flex:1;}
+.mc-name{font-size:1rem;font-weight:700;margin-bottom:.2rem;}
+.mc-desc{color:var(--tx2);font-size:.76rem;line-height:1.5;margin-bottom:7px;}
+.mc-tag{display:inline-block;padding:3px 10px;border-radius:7px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
+.mc.vc .mc-tag{background:rgba(124,58,237,.15);color:var(--p2);}
+.mc.tc .mc-tag{background:rgba(6,182,212,.1);color:var(--cy);}
+.mc-arrow{color:var(--tx3);font-size:1.3rem;flex-shrink:0;}
+
+.prem-banner{background:linear-gradient(135deg,rgba(245,158,11,.07),rgba(249,115,22,.05));border:1px solid rgba(245,158,11,.22);border-radius:var(--r2);padding:13px 15px;display:flex;align-items:center;gap:11px;margin-bottom:20px;cursor:pointer;}
+.pb-ic{font-size:1.5rem;flex-shrink:0;}
+.pb-txt{flex:1;}
+.pb-title{font-weight:700;font-size:.85rem;margin-bottom:2px;}
+.pb-sub{color:var(--tx2);font-size:.72rem;}
+.pb-cta{background:var(--grad-yw);color:#000;border:none;border-radius:9px;padding:8px 13px;font-family:var(--font);font-weight:700;font-size:.74rem;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+
+.stats-row{display:flex;justify-content:space-around;text-align:center;}
+.sr-num{font-size:1.5rem;font-weight:900;letter-spacing:-1px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.sr-lbl{color:var(--tx3);font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+
+/* ══════════════════════════════════════
+   SEARCHING
+══════════════════════════════════════ */
+#searching{background:var(--bg);flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;text-align:center;padding:24px;}
+.srch-ring{width:80px;height:80px;border:3px solid var(--b2);border-top-color:var(--p2);border-radius:50%;animation:spin .75s linear infinite;margin-bottom:20px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.srch-title{font-size:1.3rem;font-weight:800;letter-spacing:-.5px;margin-bottom:.4rem;}
+.srch-sub{color:var(--tx2);font-size:.85rem;max-width:260px;text-align:center;}
+.srch-dots{display:flex;gap:5px;margin-top:12px;}
+.srch-dot{width:6px;height:6px;background:var(--p2);border-radius:50%;animation:sd .8s infinite;}
+.srch-dot:nth-child(2){animation-delay:.2s;}.srch-dot:nth-child(3){animation-delay:.4s;}
+.srch-cancel{position:absolute;bottom:50px;background:var(--rd);color:#fff;border:none;border-radius:100px;padding:12px 28px;font-family:var(--font);font-weight:700;font-size:.9rem;cursor:pointer;transition:all .2s;}
+
+/* ══════════════════════════════════════
+   VIDEO CHAT
+══════════════════════════════════════ */
+#video-chat{background:#000;flex-direction:column;min-height:100dvh;position:relative;}
+.rv-bg{position:absolute;inset:0;background:linear-gradient(160deg,#0d0d20,#050510);display:flex;align-items:center;justify-content:center;}
+.rv-ph{text-align:center;opacity:.35;}
+.rv-ph span{font-size:4rem;display:block;margin-bottom:.5rem;}
+.rv-ph p{color:var(--tx2);font-size:.85rem;}
+.vid-grad{position:absolute;bottom:0;left:0;right:0;height:280px;background:linear-gradient(to top,rgba(6,6,15,.96),transparent);pointer-events:none;}
+.pip{position:absolute;bottom:100px;right:12px;width:100px;height:68px;background:var(--s2);border-radius:11px;border:2px solid rgba(255,255,255,.14);box-shadow:0 8px 28px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;font-size:1.6rem;cursor:pointer;z-index:15;transition:transform .2s;}
+.pip:active{transform:scale(1.06);}
+.vc-topbar{position:absolute;top:0;left:0;right:0;height:54px;padding:0 12px;background:rgba(0,0,0,.55);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:space-between;z-index:20;}
+.bk{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.1);color:var(--tx2);padding:6px 11px;border-radius:9px;cursor:pointer;font-size:.76rem;font-family:var(--font);font-weight:500;transition:all .2s;border:none;}
+.bk:hover{color:var(--tx1);}
+.vctop-c{display:flex;align-items:center;gap:7px;}
+.vctop-r{display:flex;align-items:center;gap:6px;}
+.cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.cdot.g{background:var(--gn);box-shadow:0 0 6px var(--gn);}
+.cdot.y{background:var(--yw);animation:bl 1s infinite;}
+.cdot.r{background:var(--rd);}
+.ctext{font-size:.76rem;color:var(--tx2);font-weight:500;}
+.pchip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:3px 9px;font-size:.74rem;font-weight:600;}
+.vc-sys{position:absolute;bottom:168px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.08);backdrop-filter:blur(10px);border-radius:100px;padding:6px 14px;font-size:.74rem;white-space:nowrap;z-index:15;}
+.vc-msgs{position:absolute;bottom:100px;left:12px;right:130px;display:flex;flex-direction:column;gap:5px;z-index:15;}
+.vm{padding:8px 12px;border-radius:14px;font-size:.8rem;line-height:1.4;max-width:100%;}
+.vm.t{background:rgba(255,255,255,.12);backdrop-filter:blur(8px);align-self:flex-start;}
+.vm.m{background:var(--grad);align-self:flex-end;box-shadow:0 4px 14px rgba(124,58,237,.3);}
+.vc-ctrls{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);display:flex;gap:7px;align-items:center;z-index:20;}
+.vci{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.05rem;background:rgba(255,255,255,.1);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);transition:all .2s;}
+.vci:active{transform:scale(.88);}
+.vci.muted{background:rgba(239,68,68,.3);border-color:rgba(239,68,68,.5);}
+.vc-nxt{background:var(--grad);color:#fff;border:none;border-radius:100px;padding:10px 20px;font-family:var(--font);font-weight:700;font-size:.82rem;cursor:pointer;box-shadow:0 5px 20px rgba(124,58,237,.4);transition:all .2s;}
+.vc-nxt:active{transform:scale(.95);}
+.vc-stp{background:var(--rd);color:#fff;border:none;border-radius:100px;padding:10px 16px;font-family:var(--font);font-weight:700;font-size:.82rem;cursor:pointer;transition:all .2s;}
+.vc-flg{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.85rem;}
+
+/* ══════════════════════════════════════
+   TEXT CHAT
+══════════════════════════════════════ */
+#text-chat{background:var(--s1);flex-direction:column;}
+.tc-top{height:54px;padding:0 12px;background:rgba(6,6,15,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.msgs-area{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:6px;}
+.msgs-area::-webkit-scrollbar{width:3px;}
+.msgs-area::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
+.msg-wrap{display:flex;flex-direction:column;}
+.msg-lbl{font-size:.6rem;font-weight:600;margin-bottom:2px;padding:0 3px;}
+.ml-y{align-self:flex-end;color:var(--p2);}
+.ml-t{align-self:flex-start;color:var(--tx3);}
+.mb{max-width:82%;padding:9px 13px;border-radius:16px;font-size:.83rem;line-height:1.55;word-break:break-word;}
+.mb.y{background:var(--grad);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;box-shadow:0 4px 14px rgba(124,58,237,.25);}
+.mb.t{background:var(--s2);color:var(--tx1);align-self:flex-start;border-bottom-left-radius:4px;border:1px solid var(--b1);}
+.mb.s{background:transparent;color:var(--tx3);align-self:center;font-size:.7rem;font-style:italic;text-align:center;max-width:100%;padding:2px 4px;}
+.msg-tm{font-size:.56rem;color:var(--tx3);margin-top:2px;}
+.mt-y{align-self:flex-end;padding-right:3px;}
+.mt-t{align-self:flex-start;padding-left:3px;}
+.typ-bar{padding:5px 12px;min-height:24px;}
+.typ-ind{display:none;align-items:center;gap:5px;color:var(--tx3);font-size:.72rem;font-style:italic;}
+.typ-ind.on{display:flex;}
+.tdots span{width:4px;height:4px;background:var(--tx3);border-radius:50%;display:inline-block;animation:td 1.2s infinite;}
+.tdots span:nth-child(2){animation-delay:.2s;}.tdots span:nth-child(3){animation-delay:.4s;}
+@keyframes td{0%,60%,100%{transform:translateY(0);opacity:.3}30%{transform:translateY(-5px);opacity:1}}
+.inp-row{padding:9px 10px;border-top:1px solid var(--b1);display:flex;gap:6px;align-items:flex-end;flex-shrink:0;}
+.chat-ta{flex:1;background:var(--bg);border:1.5px solid var(--b1);border-radius:12px;padding:9px 11px;color:var(--tx1);font-family:var(--font);font-size:.83rem;outline:none;resize:none;max-height:80px;line-height:1.5;transition:border-color .2s;}
+.chat-ta:focus{border-color:var(--p1);}
+.chat-ta::placeholder{color:var(--tx3);}
+.send-btn{width:38px;height:38px;background:var(--grad);border:none;border-radius:10px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;transition:all .2s;}
+.send-btn:active{transform:scale(.9);}
+.tc-ctrl-row{padding:8px 10px;border-top:1px solid var(--b1);display:flex;gap:6px;flex-shrink:0;}
+.tc-nxt{flex:1;background:var(--grad);color:#fff;border:none;border-radius:11px;padding:10px;font-family:var(--font);font-weight:700;font-size:.8rem;cursor:pointer;transition:all .2s;}
+.tc-stp{background:rgba(239,68,68,.12);color:var(--rd);border:1px solid rgba(239,68,68,.2);border-radius:11px;padding:10px 12px;font-family:var(--font);font-weight:700;font-size:.8rem;cursor:pointer;}
+.tc-flg{width:38px;background:var(--s2);border:1px solid var(--b1);border-radius:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.85rem;}
+
+/* ══════════════════════════════════════
+   PREMIUM PAGE
+══════════════════════════════════════ */
+#premium{background:var(--bg);flex-direction:column;overflow-y:auto;}
+.prem-hdr{text-align:center;padding:56px 20px 20px;}
+.ph-ic{font-size:3rem;margin-bottom:12px;display:block;animation:bounce 2s infinite;}
+.ph-title{font-size:1.8rem;font-weight:900;letter-spacing:-1.2px;margin-bottom:.3rem;}
+.ph-title span{background:var(--grad-yw);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ph-sub{color:var(--tx2);font-size:.88rem;}
+.plan-list{padding:0 16px 30px;display:flex;flex-direction:column;gap:12px;}
+.plan-c{background:var(--s1);border:1.5px solid var(--b1);border-radius:var(--r3);padding:20px;position:relative;cursor:pointer;transition:all .3s;}
+.plan-c:active{transform:scale(.98);}
+.plan-c.pop{border-color:var(--yw);box-shadow:0 0 40px rgba(245,158,11,.12);}
+.pop-tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--grad-yw);color:#000;padding:3px 14px;border-radius:100px;font-size:.68rem;font-weight:800;white-space:nowrap;}
+.plan-nm{font-size:.7rem;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+.plan-pr{display:flex;align-items:baseline;gap:4px;margin-bottom:2px;}
+.plan-amt{font-size:2rem;font-weight:900;letter-spacing:-1px;}
+.plan-per{color:var(--tx2);font-size:.84rem;}
+.plan-save{font-size:.72rem;font-weight:600;margin-bottom:14px;}
+.plan-feats{list-style:none;margin-bottom:16px;display:flex;flex-direction:column;gap:5px;}
+.plan-feats li{font-size:.8rem;color:var(--tx2);display:flex;align-items:center;gap:6px;}
+.plan-feats li::before{content:'✓';color:var(--gn);font-weight:700;flex-shrink:0;}
+.plan-btn{width:100%;background:var(--s2);border:1.5px solid var(--b2);color:var(--tx1);border-radius:var(--r);padding:12px;font-family:var(--font);font-weight:700;font-size:.86rem;cursor:pointer;transition:all .2s;}
+.plan-c.pop .plan-btn{background:var(--grad-yw);border:none;color:#000;box-shadow:0 5px 18px rgba(245,158,11,.28);}
+.back-btn2{display:block;width:calc(100%-32px);margin:0 16px 30px;background:transparent;border:1.5px solid var(--b2);color:var(--tx2);border-radius:var(--r);padding:12px;font-family:var(--font);font-size:.85rem;cursor:pointer;text-align:center;}
+
+/* ══════════════════════════════════════
+   PROFILE
+══════════════════════════════════════ */
+#profile{background:var(--bg);flex-direction:column;overflow-y:auto;}
+.prof-hdr{text-align:center;padding:56px 20px 16px;}
+.prof-av{width:72px;height:72px;background:var(--grad);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:900;margin:0 auto 12px;box-shadow:0 8px 28px rgba(124,58,237,.3);}
+.prof-nm{font-size:1.3rem;font-weight:800;margin-bottom:3px;}
+.prof-em{color:var(--tx2);font-size:.82rem;margin-bottom:10px;}
+.verify-row{display:flex;justify-content:center;gap:8px;margin-bottom:14px;}
+.vbadge{display:flex;align-items:center;gap:4px;padding:4px 10px;border-radius:8px;font-size:.72rem;font-weight:600;}
+.vb-ok{background:rgba(16,185,129,.1);color:var(--gn);border:1px solid rgba(16,185,129,.2);}
+.vb-no{background:rgba(239,68,68,.1);color:var(--rd);border:1px solid rgba(239,68,68,.2);cursor:pointer;}
+.prof-stats{display:flex;justify-content:center;gap:24px;margin-bottom:20px;}
+.ps{text-align:center;}
+.ps-n{font-size:1.3rem;font-weight:900;color:var(--p2);}
+.ps-l{color:var(--tx3);font-size:.62rem;text-transform:uppercase;letter-spacing:.5px;}
+.prof-sec{padding:0 18px 16px;}
+.prof-card{background:var(--s1);border:1px solid var(--b1);border-radius:var(--r3);}
+.prof-row{padding:13px 18px;border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:background .2s;}
+.prof-row:last-child{border-bottom:none;}
+.prof-row:hover{background:rgba(255,255,255,.02);}
+.pr-l{display:flex;align-items:center;gap:10px;font-size:.85rem;}
+.pr-l .ic{font-size:1.1rem;}
+.pr-v{color:var(--tx2);font-size:.78rem;}
+.pr-arr{color:var(--tx3);}
+
+/* ══════════════════════════════════════
+   MODAL (Report + others)
+══════════════════════════════════════ */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:flex-end;justify-content:center;backdrop-filter:blur(5px);}
+.modal-bg.on{display:flex;}
+.modal-sheet{background:var(--s1);border:1px solid var(--b2);border-radius:22px 22px 0 0;padding:20px;width:100%;max-width:480px;}
+.modal-handle{width:36px;height:4px;background:var(--b2);border-radius:2px;margin:0 auto 16px;}
+.modal-title{font-size:1rem;font-weight:700;margin-bottom:.3rem;display:flex;align-items:center;gap:7px;}
+.modal-sub{color:var(--tx2);font-size:.82rem;margin-bottom:14px;}
+.modal-sel{width:100%;background:var(--bg);border:1.5px solid var(--b1);border-radius:var(--r);padding:11px 12px;color:var(--tx1);font-family:var(--font);font-size:.88rem;outline:none;margin-bottom:14px;appearance:none;}
+.modal-sel:focus{border-color:var(--p1);}
+.modal-ta{width:100%;background:var(--bg);border:1.5px solid var(--b1);border-radius:var(--r);padding:11px 12px;color:var(--tx1);font-family:var(--font);font-size:.85rem;outline:none;resize:none;height:70px;margin-bottom:14px;}
+.modal-acts{display:flex;gap:8px;}
+.modal-cancel{flex:1;padding:12px;background:var(--s2);border:1px solid var(--b1);color:var(--tx1);border-radius:var(--r);font-family:var(--font);font-weight:700;font-size:.88rem;cursor:pointer;}
+.modal-submit{flex:1;padding:12px;background:var(--rd);border:none;color:#fff;border-radius:var(--r);font-family:var(--font);font-weight:700;font-size:.88rem;cursor:pointer;}
+
+/* Content warning overlay */
+.cw-overlay{display:none;position:fixed;inset:0;background:rgba(239,68,68,.92);z-index:600;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px;}
+.cw-overlay.on{display:flex;}
+.cw-icon{font-size:4rem;margin-bottom:16px;}
+.cw-title{font-size:1.5rem;font-weight:900;margin-bottom:.5rem;}
+.cw-msg{font-size:.9rem;opacity:.85;max-width:280px;line-height:1.6;margin-bottom:24px;}
+.cw-btn{background:#fff;color:var(--rd);border:none;border-radius:100px;padding:13px 30px;font-family:var(--font);font-weight:800;font-size:.95rem;cursor:pointer;}
+
+/* Home indicator */
+.home-ind{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;background:rgba(255,255,255,.25);border-radius:3px;z-index:100;pointer-events:none;}
+
+/* Chip tags */
+.chip{padding:4px 10px;border-radius:7px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;}
+.chip-v{background:rgba(124,58,237,.15);color:var(--p2);border:1px solid rgba(124,58,237,.2);}
+.chip-t{background:rgba(6,182,212,.1);color:var(--cy);border:1px solid rgba(6,182,212,.18);}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp .45s cubic-bezier(.34,1.56,.64,1) both;}
+.fu2{animation:fadeUp .45s .08s cubic-bezier(.34,1.56,.64,1) both;}
+.fu3{animation:fadeUp .45s .16s cubic-bezier(.34,1.56,.64,1) both;}
+</style>
+</head>
+<body>
+<div class="mesh"></div>
+<div id="toasts"></div>
+<div class="home-ind"></div>
+
+<!-- Content Warning Overlay -->
+<div class="cw-overlay" id="cw-overlay">
+  <div class="cw-icon">⚠️</div>
+  <div class="cw-title">Inappropriate Content Detected</div>
+  <p class="cw-msg" id="cw-msg">Our AI moderation system detected inappropriate content. This has been flagged and your account warned.</p>
+  <button class="cw-btn" onclick="closeCW()">I Understand</button>
+</div>
+
+<!-- Report Modal -->
+<div class="modal-bg" id="rep-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🚩 Report User</div>
+    <p class="modal-sub">Help us keep Straniq safe. Your report is anonymous.</p>
+    <select class="modal-sel" id="rep-reason">
+      <option value="nudity">Nudity or sexual content</option>
+      <option value="violence">Violence or gore</option>
+      <option value="harassment">Harassment or bullying</option>
+      <option value="inappropriate">Inappropriate behavior</option>
+      <option value="spam">Spam or bot</option>
+      <option value="underage">Appears underage</option>
+      <option value="hate">Hate speech</option>
+      <option value="other">Other</option>
+    </select>
+    <textarea class="modal-ta" id="rep-details" placeholder="Additional details (optional)..."></textarea>
+    <div class="modal-acts">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-submit" onclick="submitReport()">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SPLASH ══ -->
+<div class="pg on pg-full" id="splash" style="align-items:center;justify-content:center;">
+  <div class="splash-aura"></div>
+  <div class="splash-icon">⚡</div>
+  <div class="splash-name">Straniq</div>
+  <div class="splash-tag">Meet Strangers Safely — Instantly</div>
+  <div class="splash-dots"><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div></div>
+</div>
+
+<!-- ══ AUTH ══ -->
+<div class="pg pg-full" id="auth" style="flex-direction:column;overflow-y:auto;">
+  <div class="auth-top fu">
+    <div class="auth-logo">
+      <div class="al-ic">⚡</div>
+      <div class="al-nm">Straniq</div>
+    </div>
+    <h1 class="auth-h1">Meet the <span>World</span></h1>
+    <p class="auth-sub">Safe · Anonymous · Free</p>
+    <div class="online-pill"><div class="blink"></div><span id="oc-auth">0</span> online</div>
+  </div>
+  <div class="auth-wrap fu2">
+    <div class="auth-card">
+      <div class="tabs">
+        <button class="tab-btn on" id="tb-login" onclick="swTab('login')">Sign In</button>
+        <button class="tab-btn" id="tb-signup" onclick="swTab('signup')">Sign Up</button>
+      </div>
+
+      <!-- Login -->
+      <div id="f-login">
+        <div class="fg">
+          <label class="fl">Email / Phone / Username</label>
+          <div class="iw"><span class="ii">@</span><input class="fi" id="l-id" type="text" placeholder="email, phone or username"/></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Password</label>
+          <div class="iw"><span class="ii">🔒</span><input class="fi" id="l-pw" type="password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"/>
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--tx3);" onclick="togglePw('l-pw',this)">👁</span></div>
+        </div>
+        <div style="text-align:right;margin-bottom:14px;"><a style="color:var(--p2);font-size:.76rem;cursor:pointer;" onclick="showForgot()">Forgot password?</a></div>
+        <button class="btn-main" id="b-login" onclick="doLogin()">Sign In →</button>
+      </div>
+
+      <!-- Signup -->
+      <div id="f-signup" style="display:none;">
+        <div class="fg">
+          <label class="fl">Username</label>
+          <div class="iw"><span class="ii">@</span><input class="fi" id="s-un" type="text" placeholder="CoolUser99" maxlength="20"/></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Email <span style="color:var(--tx3);font-weight:400;text-transform:none;">(required for verification)</span></label>
+          <div class="iw"><span class="ii">✉</span><input class="fi" id="s-em" type="email" placeholder="you@example.com"/></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Phone <span style="color:var(--tx3);font-weight:400;text-transform:none;">(optional, India +91)</span></label>
+          <div class="iw"><span class="ii">📱</span><input class="fi" id="s-ph" type="tel" placeholder="9876543210 (optional)"/></div>
+        </div>
+        <div class="fg">
+          <label class="fl">Password</label>
+          <div class="iw"><span class="ii">🔒</span><input class="fi" id="s-pw" type="password" placeholder="Min 6 characters" onkeydown="if(event.key==='Enter')doSignup()"/>
+          <span style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:var(--tx3);" onclick="togglePw('s-pw',this)">👁</span></div>
+        </div>
+        <button class="btn-main" id="b-signup" onclick="doSignup()">Create Account →</button>
+      </div>
+
+      <div class="dor">or</div>
+      <button class="btn-outline" onclick="doGuest()">👤 Continue as Guest — No account needed</button>
+      <p class="tos">By continuing you agree to our <a href="#">Terms</a> & <a href="#">Privacy Policy</a>.<br>You must be 18+ to use Straniq.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ══ OTP SCREEN ══ -->
+<div class="pg" id="otp-screen" style="background:var(--bg);">
+  <div class="otp-icon" id="otp-icon">✉️</div>
+  <h2 class="otp-title" id="otp-title">Verify Your Email</h2>
+  <p class="otp-sub" id="otp-sub">Enter the 6-digit code sent to your email</p>
+  <div class="otp-inputs" id="otp-inputs">
+    <input class="otp-inp" maxlength="1" type="number" pattern="[0-9]" inputmode="numeric"/>
+    <input class="otp-inp" maxlength="1" type="number" pattern="[0-9]" inputmode="numeric"/>
+    <input class="otp-inp" maxlength="1" type="number" pattern="[0-9]" inputmode="numeric"/>
+    <input class="otp-inp" maxlength="1" type="number" pattern="[0-9]" inputmode="numeric"/>
+    <input class="otp-inp" maxlength="1" type="number" pattern="[0-9]" inputmode="numeric"/>
+    <input class="otp-inp" maxlength="1" type="number" pattern="[0-9]" inputmode="numeric"/>
+  </div>
+  <button class="btn-main" id="otp-verify-btn" style="width:260px;margin-bottom:12px;" onclick="verifyOTP()">Verify →</button>
+  <div class="otp-resend">Didn't receive? <span id="otp-resend-btn" onclick="resendOTP()">Resend OTP</span> <span class="otp-timer" id="otp-timer"></span></div>
+  <button class="btn-outline" style="width:260px;" onclick="skipVerify()">Skip for now →</button>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="pg pg-full" id="home" style="flex-direction:column;">
+  <nav class="nav">
+    <div class="nav-brand">
+      <div class="nb-ic">⚡</div>
+      <div class="nb-nm">Straniq</div>
+    </div>
+    <div class="online-pill" style="font-size:.68rem;padding:4px 10px;"><div class="blink"></div><span id="oc-home">0</span></div>
+    <div class="nav-r">
+      <div class="nav-av" id="nav-av" onclick="goTo('profile')">S<div class="nav-vbadge" id="nav-vbadge" style="display:none;"></div></div>
+      <div class="nav-badge nb-free" id="nav-badge">Free</div>
+      <button class="ibtn" onclick="goTo('premium')" title="Upgrade">⭐</button>
+      <button class="ibtn" onclick="doLogout()" title="Logout">↩</button>
+    </div>
+  </nav>
+  <div class="home-body">
+    <!-- Verification banner -->
+    <div class="unv-banner" id="unv-banner" style="display:none;" onclick="startVerify()">
+      <div class="unv-icon">⚠️</div>
+      <div class="unv-text">
+        <div class="unv-title">Verify your account</div>
+        <div class="unv-sub">Tap to verify email/phone and unlock all features</div>
+      </div>
+      <div class="unv-arrow">›</div>
+    </div>
+    <div class="home-badge fu">⚡ Safe · Anonymous · Free</div>
+    <h1 class="home-h1 fu">Choose Your<br><span class="gr">Chat Mode</span></h1>
+    <p class="home-sub fu">Connect with a random stranger worldwide — instantly and safely.</p>
+    <div class="mode-cards fu2">
+      <div class="mc vc" onclick="startChat('video')">
+        <div class="mc-glow"></div>
+        <div class="mc-inner">
+          <span class="mc-icon">🎥</span>
+          <div class="mc-txt">
+            <div class="mc-name">Video Chat</div>
+            <div class="mc-desc">Face-to-face live conversation. Camera & mic required.</div>
+            <span class="mc-tag">Video + Audio + Text</span>
+          </div>
+          <span class="mc-arrow">›</span>
+        </div>
+      </div>
+      <div class="mc tc" onclick="startChat('text')">
+        <div class="mc-glow"></div>
+        <div class="mc-inner">
+          <span class="mc-icon">💬</span>
+          <div class="mc-txt">
+            <div class="mc-name">Text Chat</div>
+            <div class="mc-desc">Anonymous messaging only. No camera needed.</div>
+            <span class="mc-tag">Text Only · No Camera</span>
+          </div>
+          <span class="mc-arrow">›</span>
+        </div>
+      </div>
+    </div>
+    <div class="prem-banner fu3" onclick="goTo('premium')">
+      <div class="pb-ic">⭐</div>
+      <div class="pb-txt">
+        <div class="pb-title">Upgrade to Straniq Pro</div>
+        <div class="pb-sub">Ad-free · Gender filter · Country filter · Priority</div>
+      </div>
+      <button class="pb-cta" onclick="event.stopPropagation();goTo('premium')">₹99/mo</button>
+    </div>
+    <div class="stats-row fu3">
+      <div><div class="sr-num" id="s-online">0</div><div class="sr-lbl">Online</div></div>
+      <div><div class="sr-num" id="s-chats">0</div><div class="sr-lbl">My Chats</div></div>
+      <div><div class="sr-num">∞</div><div class="sr-lbl">Strangers</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SEARCHING ══ -->
+<div class="pg" id="searching" style="background:var(--bg);min-height:100dvh;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;position:relative;">
+  <div class="srch-ring"></div>
+  <div class="srch-title">Finding someone<span id="srch-dots"></span></div>
+  <div class="srch-sub">Connecting you to a random stranger worldwide</div>
+  <div class="srch-dots"><div class="srch-dot"></div><div class="srch-dot"></div><div class="srch-dot"></div></div>
+  <button class="srch-cancel" onclick="cancelSearch()">✕ Cancel</button>
+</div>
+
+<!-- ══ VIDEO CHAT ══ -->
+<div class="pg" id="video-chat" style="min-height:100dvh;position:relative;background:#000;">
+  <div class="rv-bg"><div class="rv-ph"><span>👤</span><p>Waiting for video...</p></div></div>
+  <div class="vid-grad"></div>
+  <div class="pip" id="pip">😊</div>
+  <div class="vc-topbar">
+    <button class="bk" onclick="goHome()">← Back</button>
+    <div class="vctop-c">
+      <span style="font-size:.95rem;font-weight:900;color:var(--p2);">Straniq</span>
+      <span class="chip chip-v">🎥 Video</span>
+    </div>
+    <div class="vctop-r">
+      <div class="cdot g" id="v-cdot"></div>
+      <span class="ctext" id="v-ctext">Connecting...</span>
+      <span class="pchip" id="v-pname" style="display:none;"></span>
+    </div>
+  </div>
+  <div class="vc-sys" id="vc-sys" style="display:none;"></div>
+  <div class="vc-msgs" id="vc-msgs"></div>
+  <div class="vc-ctrls">
+    <div class="vci" id="mute-btn" onclick="toggleMute()" title="Mute">🎤</div>
+    <div class="vci" id="cam-btn" onclick="toggleCam()" title="Camera">📹</div>
+    <button class="vc-nxt" onclick="nextVideo()">⚡ Next</button>
+    <button class="vc-stp" onclick="goHome()">✕ Stop</button>
+    <div class="vc-flg" onclick="openModal()">🚩</div>
+  </div>
+</div>
+
+<!-- ══ TEXT CHAT ══ -->
+<div class="pg" id="text-chat" style="min-height:100dvh;flex-direction:column;">
+  <div class="tc-top">
+    <button class="bk" onclick="goHome()">← Back</button>
+    <div style="display:flex;align-items:center;gap:7px;">
+      <span style="font-size:.95rem;font-weight:900;color:var(--p2);">Straniq</span>
+      <span class="chip chip-t">💬 Text</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:5px;">
+      <div class="cdot g" id="t-cdot"></div>
+      <span class="ctext" id="t-ctext">Searching...</span>
+    </div>
+  </div>
+  <div class="msgs-area" id="msgs-area">
+    <div class="mb s">🔍 Finding a stranger for you...</div>
+  </div>
+  <div class="typ-bar"><div class="typ-ind" id="typ-ind"><div class="tdots"><span></span><span></span><span></span></div>Stranger is typing...</div></div>
+  <div class="inp-row">
+    <textarea class="chat-ta" id="chat-ta" placeholder="Type a message..." maxlength="500" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+    <button class="send-btn" onclick="sendMsg()">➤</button>
+  </div>
+  <div class="tc-ctrl-row">
+    <button class="tc-nxt" onclick="nextText()">⚡ Next Stranger</button>
+    <button class="tc-stp" onclick="goHome()">✕ Stop</button>
+    <button class="tc-flg" onclick="openModal()">🚩</button>
+  </div>
+</div>
+
+<!-- ══ PREMIUM ══ -->
+<div class="pg pg-full" id="premium" style="flex-direction:column;overflow-y:auto;background:var(--bg);">
+  <div style="padding:10px 12px 0;flex-shrink:0;"><button class="bk" onclick="goHome()" style="background:var(--s1);border:1px solid var(--b1);">← Back</button></div>
+  <div class="prem-hdr fu">
+    <span class="ph-ic">⭐</span>
+    <h1 class="ph-title">Unlock <span>Pro</span></h1>
+    <p class="ph-sub">Get the complete Straniq experience</p>
+  </div>
+  <div class="plan-list">
+    <div class="plan-c fu" onclick="buyPlan('monthly',9900,30)">
+      <div class="plan-nm">Monthly</div>
+      <div class="plan-pr"><span class="plan-amt">₹99</span><span class="plan-per">/month</span></div>
+      <div class="plan-save" style="color:var(--tx3);">Billed monthly</div>
+      <ul class="plan-feats"><li>Ad-free experience</li><li>Priority matching</li><li>Gender filter</li><li>HD video quality</li></ul>
+      <button class="plan-btn">Get Monthly</button>
+    </div>
+    <div class="plan-c pop fu2" onclick="buyPlan('quarterly',24900,90)">
+      <div class="pop-tag">🔥 Most Popular</div>
+      <div class="plan-nm">Quarterly</div>
+      <div class="plan-pr"><span class="plan-amt">₹249</span><span class="plan-per">/3 months</span></div>
+      <div class="plan-save" style="color:var(--gn);">Save 16% vs monthly</div>
+      <ul class="plan-feats"><li>Everything in Monthly</li><li>Country filter</li><li>Profile badge ⭐</li><li>Priority support</li></ul>
+      <button class="plan-btn">Get Quarterly</button>
+    </div>
+    <div class="plan-c fu3" onclick="buyPlan('yearly',79900,365)">
+      <div class="plan-nm">Yearly</div>
+      <div class="plan-pr"><span class="plan-amt">₹799</span><span class="plan-per">/year</span></div>
+      <div class="plan-save" style="color:var(--gn);">Save 33% — Best value! 🎯</div>
+      <ul class="plan-feats"><li>Everything in Quarterly</li><li>Exclusive Pro badge</li><li>Early access features</li><li>VIP support</li></ul>
+      <button class="plan-btn">Get Yearly</button>
+    </div>
+  </div>
+  <button class="back-btn2" onclick="goHome()">← Back to Home</button>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div class="pg pg-full" id="profile" style="flex-direction:column;overflow-y:auto;background:var(--bg);">
+  <div style="padding:10px 12px 0;flex-shrink:0;"><button class="bk" onclick="goHome()" style="background:var(--s1);border:1px solid var(--b1);">← Back</button></div>
+  <div class="prof-hdr fu">
+    <div class="prof-av" id="prof-av">S</div>
+    <div class="prof-nm" id="prof-nm">User</div>
+    <div class="prof-em" id="prof-em">user@example.com</div>
+    <div class="verify-row" id="verify-row"></div>
+    <div class="prof-stats">
+      <div class="ps"><div class="ps-n" id="pr-chats">0</div><div class="ps-l">Chats</div></div>
+      <div class="ps"><div class="ps-n" id="pr-msgs">0</div><div class="ps-l">Messages</div></div>
+      <div class="ps"><div class="ps-n" id="pr-days">0d</div><div class="ps-l">Member</div></div>
+    </div>
+  </div>
+  <div class="prof-sec">
+    <div class="prof-card fu2">
+      <div class="prof-row" onclick="goTo('premium')"><div class="pr-l"><span class="ic">⭐</span> Upgrade to Pro</div><span class="pr-arr" style="color:var(--yw);">›</span></div>
+      <div class="prof-row" onclick="toast('Feature coming soon!','info')"><div class="pr-l"><span class="ic">✏️</span> Edit Profile</div><span class="pr-arr">›</span></div>
+      <div class="prof-row" onclick="toast('Feature coming soon!','info')"><div class="pr-l"><span class="ic">🔒</span> Change Password</div><span class="pr-arr">›</span></div>
+      <div class="prof-row" onclick="toast('Feature coming soon!','info')"><div class="pr-l"><span class="ic">🔔</span> Notifications</div><span class="pr-arr">›</span></div>
+      <div class="prof-row" onclick="toast('Feature coming soon!','info')"><div class="pr-l"><span class="ic">🛡️</span> Privacy Settings</div><span class="pr-arr">›</span></div>
+      <div class="prof-row" onclick="doLogout()"><div class="pr-l" style="color:var(--rd);"><span class="ic">↩</span> Sign Out</div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+const S = io();
+let me = null, token = null;
+let mode = null, isConnected = false;
+let localStream = null, pc = null;
+let muted = false, camOff = false;
+let myRole = null, typTimer = null, searchTimer = null;
+let otpType = null, otpTimer = null;
+
+const ICE = { iceServers:[
+  {urls:"stun:stun.l.google.com:19302"},
+  {urls:"stun:stun1.l.google.com:19302"},
+  {urls:"stun:stun2.l.google.com:19302"},
+  {urls:"stun:stun3.l.google.com:19302"},
+  {urls:["turn:openrelay.metered.ca:80","turn:openrelay.metered.ca:443","turn:openrelay.metered.ca:443?transport=tcp"],
+    username:"openrelayproject",credential:"openrelayproject"},
+]};
+
+// ═══════════════════════════════════════════════════
+// ONLINE COUNT
+// ═══════════════════════════════════════════════════
+S.on("online-count", n => {
+  ["oc-auth","oc-home","s-online"].forEach(id => { const e = el(id); if(e) e.textContent = n.toLocaleString(); });
+});
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function toast(msg, type="info") {
+  const c = el("toasts");
+  const t = document.createElement("div");
+  t.className = `toast ${type}`;
+  const ic = { ok:"✅", err:"❌", info:"ℹ️", warn:"⚠️" };
+  t.innerHTML = `<span>${ic[type]||"ℹ️"}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("in"));
+  setTimeout(() => { t.classList.remove("in"); setTimeout(() => t.remove(), 400); }, 4000);
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════
+function goTo(pgId) {
+  document.querySelectorAll(".pg").forEach(p => p.classList.remove("on"));
+  const pg = el(pgId);
+  if (pg) pg.classList.add("on");
+}
+
+// ═══════════════════════════════════════════════════
+// SPLASH → AUTO AUTH
+// ═══════════════════════════════════════════════════
+window.addEventListener("DOMContentLoaded", () => {
+  const savedToken = localStorage.getItem("sq_token");
+  if (savedToken) {
+    fetch("/api/me", { headers: { Authorization: "Bearer " + savedToken } })
+      .then(r => r.json())
+      .then(d => {
+        if (d.user) { token = savedToken; me = d.user; S.emit("auth", token); renderHome(); }
+        else { setTimeout(() => goTo("auth"), 2200); }
+      }).catch(() => setTimeout(() => goTo("auth"), 2200));
+  } else {
+    setTimeout(() => goTo("auth"), 2200);
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// AUTH TABS
+// ═══════════════════════════════════════════════════
+function swTab(t) {
+  el("tb-login").classList.toggle("on", t === "login");
+  el("tb-signup").classList.toggle("on", t === "signup");
+  el("f-login").style.display = t === "login" ? "block" : "none";
+  el("f-signup").style.display = t === "signup" ? "block" : "none";
+}
+
+function togglePw(fieldId, btn) {
+  const f = el(fieldId);
+  if (!f) return;
+  const isPass = f.type === "password";
+  f.type = isPass ? "text" : "password";
+  btn.textContent = isPass ? "🙈" : "👁";
+}
+
+// ═══════════════════════════════════════════════════
+// LOGIN
+// ═══════════════════════════════════════════════════
+async function doLogin() {
+  const identifier = el("l-id").value.trim();
+  const password = el("l-pw").value;
+  if (!identifier || !password) { toast("Please fill all fields.", "err"); return; }
+  setBtnLoad("b-login", true, "Signing in...");
+  try {
+    const r = await api("/api/login", { identifier, password });
+    if (r.error) { toast(r.error, "err"); return; }
+    token = r.token; me = r.user;
+    localStorage.setItem("sq_token", token);
+    S.emit("auth", token);
+    toast(`Welcome back, ${me.username}! 👋`, "ok");
+    renderHome();
+    if (!r.isVerified) setTimeout(startVerify, 1500);
+  } finally { setBtnLoad("b-login", false, "Sign In →"); }
+}
+
+// ═══════════════════════════════════════════════════
+// SIGNUP
+// ═══════════════════════════════════════════════════
+async function doSignup() {
+  const username = el("s-un").value.trim();
+  const email    = el("s-em").value.trim();
+  const phone    = el("s-ph").value.trim();
+  const password = el("s-pw").value;
+  if (!username || !password) { toast("Username and password are required.", "err"); return; }
+  if (!email && !phone) { toast("Please enter email or phone number.", "err"); return; }
+  setBtnLoad("b-signup", true, "Creating account...");
+  try {
+    const r = await api("/api/register", { username, email: email||undefined, phone: phone||undefined, password });
+    if (r.error) { toast(r.error, "err"); return; }
+    token = r.token; me = r.user;
+    localStorage.setItem("sq_token", token);
+    S.emit("auth", token);
+    toast(`Account created! Welcome, ${me.username} 🎉`, "ok");
+    renderHome();
+    // Auto-start verification
+    setTimeout(startVerify, 1000);
+  } finally { setBtnLoad("b-signup", false, "Create Account →"); }
+}
+
+// ═══════════════════════════════════════════════════
+// GUEST
+// ═══════════════════════════════════════════════════
+function doGuest() {
+  const names = ["StarRider","NightOwl","CloudSurf","PixelFox","NeonWave","SkyBolt","MoonRider"];
+  const n = names[Math.floor(Math.random()*names.length)] + Math.floor(Math.random()*999+1);
+  me = { username: n, avatar: n[0].toUpperCase(), totalChats:0, isGuest:true, isPremium:false };
+  S.emit("join-guest", n);
+  toast("Joined as Guest 👤", "info");
+  renderHome();
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER HOME
+// ═══════════════════════════════════════════════════
+function renderHome() {
+  const av = el("nav-av");
+  if (av) { av.textContent = me.avatar || me.username[0].toUpperCase(); }
+  el("s-chats").textContent = me.totalChats || 0;
+
+  // Verification badge
+  const vbadge = el("nav-vbadge");
+  if (vbadge) vbadge.style.display = (me.isEmailVerified || me.isPhoneVerified) ? "block" : "none";
+
+  // Plan badge
+  const badge = el("nav-badge");
+  if (badge) {
+    if (me.isPremium) { badge.textContent = "⭐ Pro"; badge.className = "nav-badge nb-pro"; }
+    else if (!me.isEmailVerified && !me.isPhoneVerified && !me.isGuest) { badge.textContent = "Unverified"; badge.className = "nav-badge nb-unv"; }
+    else { badge.textContent = "Free"; badge.className = "nav-badge nb-free"; }
+  }
+
+  // Show verification banner
+  const unvBanner = el("unv-banner");
+  if (unvBanner) unvBanner.style.display = (!me.isGuest && !me.isEmailVerified && !me.isPhoneVerified) ? "flex" : "none";
+
+  // Premium banner
+  const premBanner = document.querySelector(".prem-banner");
+  if (premBanner) premBanner.style.display = me.isPremium ? "none" : "flex";
+
+  // Profile page
+  el("prof-av").textContent = me.avatar || me.username[0].toUpperCase();
+  el("prof-nm").textContent = me.username;
+  el("prof-em").textContent = me.email || (me.phone ? `📱 ${me.phone}` : "Guest");
+  el("pr-chats").textContent = me.totalChats || 0;
+
+  // Verify row
+  const vr = el("verify-row");
+  if (vr) {
+    vr.innerHTML = "";
+    if (me.isEmailVerified) vr.innerHTML += `<span class="vbadge vb-ok">✅ Email Verified</span>`;
+    else if (me.email && !me.isGuest) vr.innerHTML += `<span class="vbadge vb-no" onclick="startVerify()">⚠️ Verify Email</span>`;
+    if (me.isPhoneVerified) vr.innerHTML += `<span class="vbadge vb-ok">✅ Phone Verified</span>`;
+  }
+
+  const joined = me.joinedAt ? Math.floor((Date.now() - new Date(me.joinedAt))/86400000) : 0;
+  el("pr-days").textContent = joined + "d";
+
+  goTo("home");
+}
+
+// ═══════════════════════════════════════════════════
+// OTP VERIFICATION
+// ═══════════════════════════════════════════════════
+function startVerify() {
+  if (!me || me.isGuest) return;
+  if (me.isEmailVerified || me.isPhoneVerified) return;
+  if (me.email) startEmailOTP();
+  else if (me.phone) startPhoneOTP();
+}
+
+async function startEmailOTP() {
+  otpType = "email";
+  el("otp-icon").textContent = "✉️";
+  el("otp-title").textContent = "Verify Your Email";
+  el("otp-sub").textContent = `We sent a 6-digit code to ${me.email?.replace(/(.{2}).*(@.*)/, "$1***$2") || "your email"}`;
+  clearOTPInputs();
+  goTo("otp-screen");
+  startOTPTimer();
+  // Send OTP
+  const r = await authFetch("/api/send-email-otp", {});
+  if (r.error) toast(r.error, "err");
+  else {
+    toast(r.demo ? `[DEV] OTP: ${r.otp}` : "OTP sent to your email! ✉️", r.demo ? "warn" : "ok");
+    if (r.demo && r.otp) autoFillOTP(r.otp);
+  }
+}
+
+async function startPhoneOTP() {
+  otpType = "phone";
+  el("otp-icon").textContent = "📱";
+  el("otp-title").textContent = "Verify Your Phone";
+  el("otp-sub").textContent = `We sent a 6-digit code to ${me.phone?.replace(/(\d{2})\d{6}(\d{2})/, "$1xxxxxx$2") || "your phone"}`;
+  clearOTPInputs();
+  goTo("otp-screen");
+  startOTPTimer();
+  const r = await authFetch("/api/send-phone-otp", {});
+  if (r.error) toast(r.error, "err");
+  else {
+    toast(r.demo ? `[DEV] OTP: ${r.otp}` : "OTP sent to your phone! 📱", r.demo ? "warn" : "ok");
+    if (r.demo && r.otp) autoFillOTP(r.otp);
+  }
+}
+
+function autoFillOTP(otp) {
+  const inputs = el("otp-inputs").querySelectorAll(".otp-inp");
+  String(otp).split("").forEach((d, i) => {
+    if (inputs[i]) { inputs[i].value = d; inputs[i].classList.add("filled"); }
+  });
+}
+
+function clearOTPInputs() {
+  const inputs = el("otp-inputs").querySelectorAll(".otp-inp");
+  inputs.forEach(inp => { inp.value = ""; inp.classList.remove("filled"); });
+}
+
+function getOTPValue() {
+  const inputs = el("otp-inputs").querySelectorAll(".otp-inp");
+  return [...inputs].map(i => i.value).join("");
+}
+
+async function verifyOTP() {
+  const otp = getOTPValue();
+  if (otp.length !== 6) { toast("Please enter the complete 6-digit OTP.", "err"); return; }
+  setBtnLoad("otp-verify-btn", true, "Verifying...");
+  try {
+    const endpoint = otpType === "email" ? "/api/verify-email-otp" : "/api/verify-phone-otp";
+    const r = await authFetch(endpoint, { otp });
+    if (r.error) { toast(r.error, "err"); return; }
+    token = r.token; me = r.user;
+    localStorage.setItem("sq_token", token);
+    toast("Verified successfully! ✅", "ok");
+    renderHome();
+  } finally { setBtnLoad("otp-verify-btn", false, "Verify →"); }
+}
+
+async function resendOTP() {
+  if (otpType === "email") await startEmailOTP();
+  else await startPhoneOTP();
+}
+
+function skipVerify() {
+  clearOTPTimer();
+  renderHome();
+  toast("You can verify later from your profile.", "info");
+}
+
+function startOTPTimer(seconds = 60) {
+  clearOTPTimer();
+  let remaining = seconds;
+  const timerEl = el("otp-timer");
+  const resendEl = el("otp-resend-btn");
+  if (resendEl) { resendEl.style.pointerEvents = "none"; resendEl.style.opacity = ".4"; }
+  const update = () => {
+    if (timerEl) timerEl.textContent = `(${remaining}s)`;
+    if (remaining <= 0) {
+      clearOTPTimer();
+      if (timerEl) timerEl.textContent = "";
+      if (resendEl) { resendEl.style.pointerEvents = ""; resendEl.style.opacity = ""; }
+    } else {
+      remaining--;
+      otpTimer = setTimeout(update, 1000);
+    }
+  };
+  update();
+}
+function clearOTPTimer() { if (otpTimer) { clearTimeout(otpTimer); otpTimer = null; } }
+
+// OTP input auto-focus
+document.addEventListener("DOMContentLoaded", () => {
+  const inputs = el("otp-inputs")?.querySelectorAll(".otp-inp") || [];
+  inputs.forEach((inp, i) => {
+    inp.addEventListener("input", () => {
+      if (inp.value.length === 1) {
+        inp.classList.add("filled");
+        if (i < inputs.length - 1) inputs[i+1].focus();
+      }
+    });
+    inp.addEventListener("keydown", (e) => {
+      if (e.key === "Backspace" && !inp.value && i > 0) { inputs[i-1].focus(); inputs[i-1].classList.remove("filled"); }
+    });
+  });
+});
+
+// ═══════════════════════════════════════════════════
+// FORGOT PASSWORD
+// ═══════════════════════════════════════════════════
+function showForgot() {
+  const id = prompt("Enter your registered email or phone number:");
+  if (!id) return;
+  fetch("/api/forgot-password", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ identifier: id }) })
+    .then(r => r.json())
+    .then(d => {
+      toast("If account exists, reset OTP has been sent.", "ok");
+      // Show reset dialog
+      setTimeout(() => {
+        const otp = prompt("Enter the OTP you received:");
+        if (!otp) return;
+        const newPw = prompt("Enter your new password (min 6 chars):");
+        if (!newPw || newPw.length < 6) { toast("Password too short.", "err"); return; }
+        fetch("/api/reset-password", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ userId: d.userId, otp, newPassword: newPw }) })
+          .then(r => r.json())
+          .then(d2 => { if (d2.success) toast("Password reset! Please login.", "ok"); else toast(d2.error, "err"); });
+      }, 2000);
+    });
+}
+
+// ═══════════════════════════════════════════════════
+// LOGOUT
+// ═══════════════════════════════════════════════════
+function doLogout() {
+  if (token) authFetch("/api/logout", {});
+  token = null; me = null;
+  localStorage.removeItem("sq_token");
+  S.emit("skip");
+  cleanupRTC();
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  goTo("auth");
+  toast("Logged out successfully.", "info");
+}
+
+// ═══════════════════════════════════════════════════
+// START CHAT
+// ═══════════════════════════════════════════════════
+async function startChat(m) {
+  mode = m;
+  if (m === "video") {
+    try {
+      localStream = await navigator.mediaDevices.getUserMedia({ video: { width:1280, height:720, facingMode:"user" }, audio:true });
+    } catch(e) {
+      toast("Camera/Microphone access denied. Please allow and try again.", "err"); return;
+    }
+  }
+  goTo("searching");
+  startSearchAnim();
+  S.emit("find-stranger", { mode: m, interests: [] });
+}
+
+function startSearchAnim() {
+  let dots = 0;
+  const dotsEl = el("srch-dots") ? document.getElementById("srch-dots") : null;
+  const titleDots = document.getElementById("srch-dots");
+  if (titleDots) {
+    searchTimer = setInterval(() => { dots=(dots+1)%4; titleDots.textContent = ".".repeat(dots); }, 500);
+  }
+}
+
+function cancelSearch() {
+  if (searchTimer) clearInterval(searchTimer);
+  S.emit("skip");
+  goHome();
+}
+
+// ═══════════════════════════════════════════════════
+// SOCKET EVENTS
+// ═══════════════════════════════════════════════════
+S.on("waiting", () => {});
+
+S.on("matched", async ({ mode: m, partnerName, role }) => {
+  if (searchTimer) { clearInterval(searchTimer); searchTimer = null; }
+  myRole = role;
+  isConnected = true;
+
+  if (m === "video") {
+    el("v-cdot").className = "cdot g";
+    el("v-ctext").textContent = "Connected";
+    const pname = el("v-pname");
+    if (pname) { pname.textContent = "👤 " + partnerName; pname.style.display = "block"; }
+    const sys = el("vc-sys");
+    if (sys) { sys.textContent = `✅ Connected with ${partnerName}! Say hello 👋`; sys.style.display = "block"; }
+    goTo("video-chat");
+    await setupRTC(role);
+  } else {
+    el("t-cdot").className = "cdot g";
+    el("t-ctext").textContent = "Connected with " + partnerName;
+    addMsg(`✅ Connected with ${partnerName}! Say hello 👋`, "s");
+    goTo("text-chat");
+  }
+});
+
+S.on("partner-left", () => {
+  isConnected = false;
+  cleanupRTC();
+  if (mode === "video") {
+    const sys = el("vc-sys");
+    if (sys) { sys.textContent = "👋 Stranger left. Click Next for someone new."; sys.style.display = "block"; }
+    el("v-cdot").className = "cdot r";
+    el("v-ctext").textContent = "Disconnected";
+    const pname = el("v-pname");
+    if (pname) pname.style.display = "none";
+  } else {
+    addMsg("👋 Stranger disconnected. Click Next for someone new.", "s");
+    el("t-cdot").className = "cdot r";
+    el("t-ctext").textContent = "Disconnected";
+  }
+  hideTyping();
+});
+
+S.on("skipped", () => {});
+S.on("chat-msg", ({ text, name, time }) => { addMsg(text, "t", name, time); hideTyping(); });
+S.on("partner-typing", v => { const e = el("typ-ind"); if(e) e.classList.toggle("on", v); });
+S.on("banned", ({ reason }) => { toast(`Account suspended: ${reason}`, "err"); setTimeout(doLogout, 2000); });
+S.on("auth-error", (msg) => toast(msg, "err"));
+S.on("msg-blocked", ({ message }) => { toast(message, "warn"); });
+
+// Content warning from server
+S.on("content-warning", ({ message, type }) => {
+  el("cw-msg").textContent = message;
+  el("cw-overlay").classList.add("on");
+});
+
+// WebRTC signaling
+S.on("rtc-offer", async offer => {
+  if (!pc) return;
+  await pc.setRemoteDescription(new RTCSessionDescription(offer));
+  const ans = await pc.createAnswer();
+  await pc.setLocalDescription(ans);
+  S.emit("rtc-answer", ans);
+});
+S.on("rtc-answer", async ans => { if (pc) await pc.setRemoteDescription(new RTCSessionDescription(ans)); });
+S.on("rtc-ice", async c => { if (pc && c) try { await pc.addIceCandidate(new RTCIceCandidate(c)); } catch {} });
+
+// ═══════════════════════════════════════════════════
+// WebRTC
+// ═══════════════════════════════════════════════════
+async function setupRTC(role) {
+  cleanupRTC();
+  pc = new RTCPeerConnection(ICE);
+  if (localStream) localStream.getTracks().forEach(t => pc.addTrack(t, localStream));
+  el("pip").style.background = ""; // placeholder
+  el("pip").textContent = "😊";
+
+  pc.ontrack = e => {
+    const rv = document.querySelector(".rv-bg");
+    if (rv && e.streams[0]) {
+      rv.innerHTML = "";
+      const video = document.createElement("video");
+      video.srcObject = e.streams[0];
+      video.autoplay = true; video.playsinline = true;
+      video.style.cssText = "width:100%;height:100%;object-fit:cover;";
+      rv.appendChild(video);
+    }
+  };
+
+  pc.onicecandidate = e => { if (e.candidate) S.emit("rtc-ice", e.candidate); };
+  pc.onconnectionstatechange = () => {
+    const s = pc?.connectionState;
+    if (s === "connected") el("v-ctext").textContent = "Connected";
+    if (s === "failed" || s === "disconnected") {
+      isConnected = false;
+      el("v-cdot").className = "cdot r";
+      el("v-ctext").textContent = "Connection lost";
+    }
+  };
+
+  if (role === "caller") {
+    const offer = await pc.createOffer({ offerToReceiveAudio:true, offerToReceiveVideo:true });
+    await pc.setLocalDescription(offer);
+    S.emit("rtc-offer", offer);
+  }
+
+  // PiP local video
+  if (localStream) {
+    const pipEl = el("pip");
+    pipEl.innerHTML = "";
+    pipEl.style.fontSize = "0";
+    const lv = document.createElement("video");
+    lv.srcObject = localStream; lv.autoplay = true; lv.playsinline = true; lv.muted = true;
+    lv.style.cssText = "width:100%;height:100%;object-fit:cover;border-radius:9px;";
+    pipEl.appendChild(lv);
+  }
+}
+
+function cleanupRTC() {
+  if (pc) { pc.close(); pc = null; }
+  const rv = document.querySelector(".rv-bg");
+  if (rv) rv.innerHTML = '<div class="rv-ph"><span>👤</span><p>Waiting for video...</p></div>';
+}
+
+// ═══════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════
+function nextVideo() {
+  isConnected = false; cleanupRTC();
+  const sys = el("vc-sys"); if (sys) sys.style.display = "none";
+  el("vc-msgs").innerHTML = "";
+  const pname = el("v-pname"); if (pname) pname.style.display = "none";
+  el("v-cdot").className = "cdot y";
+  el("v-ctext").textContent = "Searching...";
+  S.emit("skip");
+  setTimeout(() => { S.emit("find-stranger", { mode: "video", interests:[] }); }, 200);
+}
+
+function nextText() {
+  isConnected = false;
+  el("msgs-area").innerHTML = '<div class="mb s">🔍 Finding a new stranger...</div>';
+  hideTyping();
+  el("t-cdot").className = "cdot y";
+  el("t-ctext").textContent = "Searching...";
+  S.emit("skip");
+  setTimeout(() => S.emit("find-stranger", { mode:"text", interests:[] }), 200);
+}
+
+function goHome() {
+  S.emit("skip");
+  cleanupRTC();
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  if (searchTimer) { clearInterval(searchTimer); searchTimer = null; }
+  isConnected = false; mode = null; myRole = null;
+  el("msgs-area").innerHTML = '<div class="mb s">🔍 Finding a stranger for you...</div>';
+  renderHome();
+}
+
+function toggleMute() {
+  if (!localStream) return;
+  muted = !muted;
+  localStream.getAudioTracks().forEach(t => t.enabled = !muted);
+  const b = el("mute-btn");
+  if (b) { b.textContent = muted ? "🔇" : "🎤"; b.classList.toggle("muted", muted); }
+  toast(muted ? "Microphone muted" : "Microphone on", "info");
+}
+
+function toggleCam() {
+  if (!localStream) return;
+  camOff = !camOff;
+  localStream.getVideoTracks().forEach(t => t.enabled = !camOff);
+  const b = el("cam-btn");
+  if (b) b.textContent = camOff ? "📷" : "📹";
+  toast(camOff ? "Camera off" : "Camera on", "info");
+}
+
+function closeCW() { el("cw-overlay").classList.remove("on"); }
+
+// ═══════════════════════════════════════════════════
+// MESSAGING
+// ═══════════════════════════════════════════════════
+function sendMsg() {
+  const ta = el("chat-ta");
+  const txt = ta?.value.trim();
+  if (!txt) return;
+  if (!isConnected) { toast("Wait for someone to connect first!", "err"); return; }
+  const time = new Date().toLocaleTimeString("en-US", { hour:"2-digit", minute:"2-digit" });
+  S.emit("chat-msg", txt);
+  addMsg(txt, "y", me?.username || "You", time);
+  ta.value = ""; ta.style.height = "auto";
+  S.emit("typing", false);
+}
+
+function handleKey(e) { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); } }
+function autoResize(el) { el.style.height = "auto"; el.style.height = Math.min(el.scrollHeight, 80) + "px"; }
+
+function addMsg(text, type, sender, time) {
+  const area = el("msgs-area");
+  if (!area) return;
+  if (type === "s") {
+    const d = document.createElement("div");
+    d.className = "mb s"; d.textContent = text;
+    area.appendChild(d);
+  } else {
+    const wrap = document.createElement("div");
+    wrap.className = "msg-wrap";
+    const lbl = document.createElement("div");
+    lbl.className = `msg-lbl ${type === "y" ? "ml-y" : "ml-t"}`;
+    lbl.textContent = sender || (type === "y" ? "You" : "Stranger");
+    const bbl = document.createElement("div");
+    bbl.className = `mb ${type}`;
+    bbl.textContent = text;
+    const tm = document.createElement("div");
+    tm.className = `msg-tm ${type === "y" ? "mt-y" : "mt-t"}`;
+    tm.textContent = time || "";
+    wrap.appendChild(lbl); wrap.appendChild(bbl); wrap.appendChild(tm);
+    area.appendChild(wrap);
+  }
+  area.scrollTop = area.scrollHeight;
+}
+
+function hideTyping() { const e = el("typ-ind"); if (e) e.classList.remove("on"); }
+
+// Typing with debounce
+el("chat-ta")?.addEventListener("input", () => {
+  if (!isConnected) return;
+  S.emit("typing", true);
+  clearTimeout(typTimer);
+  typTimer = setTimeout(() => S.emit("typing", false), 1500);
+});
+
+// ═══════════════════════════════════════════════════
+// REPORT MODAL
+// ═══════════════════════════════════════════════════
+let currentPartnerSocket = null;
+function openModal() { el("rep-modal").classList.add("on"); }
+function closeModal() { el("rep-modal").classList.remove("on"); }
+function submitReport() {
+  const reason = el("rep-reason").value;
+  const details = el("rep-details").value;
+  fetch("/api/report", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ reason, details }) });
+  closeModal();
+  toast("🚩 Report submitted. Thank you for keeping Straniq safe!", "ok");
+  el("rep-details").value = "";
+}
+
+// ═══════════════════════════════════════════════════
+// PREMIUM / PAYMENT
+// ═══════════════════════════════════════════════════
+async function buyPlan(plan, amount, days) {
+  if (!me || me.isGuest) { toast("Please create an account to upgrade.", "err"); goTo("auth"); return; }
+  toast("Setting up payment...", "info");
+  const r = await authFetch("/api/payment/create-order", { plan });
+  if (r.error) { toast(r.error, "err"); return; }
+  if (!r.keyId || r.keyId === "rzp_test_demo") {
+    toast("Add Razorpay keys in Render environment to enable payments.", "info"); return;
+  }
+  const rzp = new (window.Razorpay || function(){})({
+    key: r.keyId, amount: r.amount, currency: r.currency,
+    name: "Straniq Pro", description: r.label,
+    order_id: r.orderId, prefill:{ email: me.email||"", name: me.username },
+    theme:{ color:"#7c3aed" },
+    handler: async (res) => {
+      const vr = await authFetch("/api/payment/verify", { razorpay_payment_id: res.razorpay_payment_id, razorpay_order_id: res.razorpay_order_id, razorpay_signature: res.razorpay_signature, days, plan });
+      if (vr.success) { me = vr.user; localStorage.setItem("sq_token", token); toast("🎉 Straniq Pro activated!", "ok"); renderHome(); }
+    }
+  });
+  rzp.open();
+}
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+function el(id) { return document.getElementById(id); }
+
+function setBtnLoad(id, loading, text) {
+  const b = el(id);
+  if (b) { b.disabled = loading; b.textContent = text; }
+}
+
+async function api(url, body) {
+  const r = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+  return r.json();
+}
+
+async function authFetch(url, body) {
+  const r = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token}, body:JSON.stringify(body) });
+  return r.json();
+}
+
+// Animated online count
+let oc = 0;
+setInterval(() => { oc += Math.floor(Math.random()*5)-2; oc = Math.max(100, Math.min(9999, oc)); const e = el("oc-auth"); if(e) e.textContent = oc.toLocaleString(); }, 3000);
+</script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</body>
+</html>
