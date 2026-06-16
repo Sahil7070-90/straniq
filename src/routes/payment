@@ -1,0 +1,70 @@
+// src/routes/payment.js
+const router = require("express").Router();
+const crypto = require("crypto");
+const { authenticate, paymentLimiter } = require("../middleware/auth");
+const db = require("../models/db");
+
+const RZP_KEY_ID  = process.env.RAZORPAY_KEY_ID  || "";
+const RZP_SECRET  = process.env.RAZORPAY_SECRET   || "";
+const HAS_RZP     = !!(RZP_KEY_ID && RZP_SECRET);
+
+const PLANS = {
+  monthly:   { label:"Straniq Pro — 1 Month",  amount:9900,  currency:"INR", days:30  },
+  quarterly: { label:"Straniq Pro — 3 Months", amount:24900, currency:"INR", days:90  },
+  yearly:    { label:"Straniq Pro — 1 Year",   amount:79900, currency:"INR", days:365 },
+};
+
+let Razorpay, rzp;
+if (HAS_RZP) {
+  try { Razorpay = require("razorpay"); rzp = new Razorpay({ key_id: RZP_KEY_ID, key_secret: RZP_SECRET }); }
+  catch(e) { console.warn("Razorpay not installed:", e.message); }
+}
+
+router.get("/plans", (req, res) => {
+  res.json({ plans: Object.entries(PLANS).map(([k,p]) => ({ id:k,...p, amountDisplay:`₹${p.amount/100}` })), razorpayEnabled: HAS_RZP, keyId: HAS_RZP ? RZP_KEY_ID : null });
+});
+
+router.post("/create-order", authenticate, paymentLimiter, async (req, res) => {
+  const plan = PLANS[req.body.plan];
+  if (!plan) return res.status(400).json({ error: "Invalid plan." });
+  if (!HAS_RZP || !rzp) {
+    const mockId = "order_demo_" + Date.now();
+    db.createPayment({ userId: req.user.id, orderId: mockId, plan: req.body.plan, amount: plan.amount, currency: plan.currency });
+    return res.json({ success:true, demo:true, orderId:mockId, amount:plan.amount, currency:plan.currency, label:plan.label, days:plan.days, keyId:"rzp_test_demo", message:"Add Razorpay keys in Render environment variables." });
+  }
+  try {
+    const order = await rzp.orders.create({ amount: plan.amount, currency: plan.currency, receipt: `straniq_${req.user.id.slice(0,8)}_${Date.now()}`, notes: { userId: req.user.id, plan: req.body.plan } });
+    db.createPayment({ userId: req.user.id, orderId: order.id, plan: req.body.plan, amount: order.amount, currency: order.currency });
+    res.json({ success:true, orderId:order.id, amount:order.amount, currency:order.currency, label:plan.label, days:plan.days, keyId:RZP_KEY_ID });
+  } catch(e) { res.status(500).json({ error:"Payment setup failed." }); }
+});
+
+router.post("/verify", authenticate, async (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, days, plan } = req.body;
+  if (!razorpay_payment_id) return res.status(400).json({ error:"Payment ID missing." });
+  const payment = db.getPaymentByOrder(razorpay_order_id);
+  if (!payment) return res.status(400).json({ error:"Order not found." });
+
+  if (!HAS_RZP || razorpay_order_id?.startsWith("order_demo_")) {
+    db.completePayment(razorpay_order_id, { paymentId: razorpay_payment_id || "demo_"+Date.now(), signature:"demo" });
+    const planDays = PLANS[plan]?.days || days || 30;
+    const user = db.activatePremium(req.user.id, { plan: payment.plan || plan, days: planDays, paymentId: razorpay_payment_id });
+    return res.json({ success:true, message:"Straniq Pro activated! 🎉", user: db.safeUser(user) });
+  }
+
+  const body2 = razorpay_order_id + "|" + razorpay_payment_id;
+  const expected = crypto.createHmac("sha256", RZP_SECRET).update(body2).digest("hex");
+  if (expected !== razorpay_signature) return res.status(400).json({ error:"Payment verification failed." });
+
+  db.completePayment(razorpay_order_id, { paymentId: razorpay_payment_id, signature: razorpay_signature });
+  const planDays = PLANS[payment.plan]?.days || 30;
+  const user = db.activatePremium(req.user.id, { plan: payment.plan, days: planDays, paymentId: razorpay_payment_id });
+  res.json({ success:true, message:"Straniq Pro activated! 🎉", user: db.safeUser(user) });
+});
+
+router.get("/history", authenticate, (req, res) => {
+  const payments = db.getAllPayments().filter(p => p.userId === req.user.id);
+  res.json({ payments });
+});
+
+module.exports = router;
