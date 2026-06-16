@@ -1,0 +1,125 @@
+// src/routes/admin.js — Hidden Admin Panel Routes
+
+const router = require("express").Router();
+const { requireAdmin } = require("../middleware/auth");
+const db = require("../models/db");
+const { liveState } = require("../socket/handler");
+
+// All routes require admin password
+router.use(requireAdmin);
+
+// POST /api/__ADMIN_PATH__/stats
+router.post("/stats", (req, res) => {
+  const mem = process.memoryUsage();
+  const stats = db.getStats();
+  res.json({
+    live: {
+      onlineNow: liveState.onlineCount,
+      waitingVideo: liveState.waitingVideo ? 1 : 0,
+      waitingText: liveState.waitingText ? 1 : 0,
+    },
+    stats,
+    server: {
+      uptime: process.uptime(),
+      node: process.version,
+      memory: {
+        used: Math.round(mem.heapUsed / 1024 / 1024),
+        total: Math.round(mem.heapTotal / 1024 / 1024),
+        rss: Math.round(mem.rss / 1024 / 1024),
+        percent: Math.round((mem.heapUsed / mem.heapTotal) * 100),
+      },
+      platform: process.platform,
+    },
+    payments: {
+      all: db.getAllPayments().slice(0, 30),
+      total: db.getAllPayments().length,
+      revenue: db.getAllPayments().filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0),
+    },
+    reports: db.reports.slice().reverse().slice(0, 50),
+    modLog: db.moderationLog.slice().reverse().slice(0, 30),
+    userList: db.getAllUsers().map(u => db.safeUser(u)),
+  });
+});
+
+// POST /stats — alias (called with password in body)
+router.post("/dashboard", (req, res) => {
+  const mem = process.memoryUsage();
+  res.json({
+    onlineNow: liveState.onlineCount,
+    totalConnections: db.stats.totalConnections,
+    totalChats: db.stats.totalChats,
+    totalUsers: db.users.size,
+    premiumUsers: db.getAllUsers().filter(u => u.isPremium).length,
+    waitingVideo: liveState.waitingVideo ? 1 : 0,
+    waitingText: liveState.waitingText ? 1 : 0,
+    reports: db.reports.slice().reverse().slice(0, 50),
+    uptime: process.uptime(),
+    memory: {
+      used: Math.round(mem.heapUsed / 1024 / 1024),
+      total: Math.round(mem.heapTotal / 1024 / 1024),
+      percent: Math.round((mem.heapUsed / mem.heapTotal) * 100),
+    },
+    revenue: db.getAllPayments().filter(p => p.status === "success").reduce((s, p) => s + p.amount, 0),
+    userList: db.getAllUsers().map(u => db.safeUser(u)),
+  });
+});
+
+// POST /ban
+router.post("/ban", (req, res) => {
+  const { userId, reason } = req.body;
+  if (!userId) return res.status(400).json({ error: "User ID required." });
+  const user = db.getUserById(userId);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  if (user.isBanned) {
+    db.unbanUser(userId);
+    return res.json({ success: true, action: "unbanned", user: db.safeUser(db.getUserById(userId)) });
+  } else {
+    db.banUser(userId, { reason: reason || "Policy violation", bannedBy: "admin" });
+    return res.json({ success: true, action: "banned", user: db.safeUser(db.getUserById(userId)) });
+  }
+});
+
+// POST /warn
+router.post("/warn", (req, res) => {
+  const { userId, reason } = req.body;
+  if (!userId) return res.status(400).json({ error: "User ID required." });
+  const user = db.warnUser(userId, reason);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  res.json({ success: true, warnCount: user.warnCount, autoBanned: user.isBanned, user: db.safeUser(user) });
+});
+
+// POST /grant-premium
+router.post("/grant-premium", (req, res) => {
+  const { userId, days } = req.body;
+  if (!userId) return res.status(400).json({ error: "User ID required." });
+  const user = db.getUserById(userId);
+  if (!user) return res.status(404).json({ error: "User not found." });
+  db.activatePremium(userId, { plan: "admin_grant", days: parseInt(days) || 30, paymentId: "admin_" + Date.now() });
+  res.json({ success: true, message: `Premium granted for ${days || 30} days.` });
+});
+
+// POST /revoke-premium
+router.post("/revoke-premium", (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: "User ID required." });
+  db.updateUser(userId, { isPremium: false, premiumPlan: null, premiumExpiry: null });
+  res.json({ success: true });
+});
+
+// POST /delete-report
+router.post("/delete-report", (req, res) => {
+  const { reportId } = req.body;
+  if (!reportId) return res.status(400).json({ error: "Report ID required." });
+  db.deleteReport(reportId);
+  res.json({ success: true });
+});
+
+// POST /ban-ip
+router.post("/ban-ip", (req, res) => {
+  const { ip } = req.body;
+  if (!ip) return res.status(400).json({ error: "IP required." });
+  db.banIP(ip);
+  res.json({ success: true, message: `IP ${ip} banned.` });
+});
+
+module.exports = router;
