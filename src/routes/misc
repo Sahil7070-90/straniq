@@ -1,0 +1,26 @@
+// src/routes/misc.js
+const router = require("express").Router();
+const { body, validationResult } = require("express-validator");
+const { optionalAuth, apiLimiter } = require("../middleware/auth");
+const db = require("../models/db");
+
+router.get("/health", (req, res) => {
+  res.json({ status: "ok", app: "Straniq", version: "1.0.0", uptime: process.uptime(), timestamp: new Date().toISOString() });
+});
+
+router.get("/stats/public", (req, res) => {
+  res.json({ totalUsers: db.getTotalUsers ? db.getTotalUsers() : db.users.size, totalChats: db.stats.totalChats });
+});
+
+router.post("/report", optionalAuth, apiLimiter, [
+  body("reason").notEmpty().isIn(["inappropriate","nudity","harassment","spam","underage","hate","violence","other"]),
+  body("details").optional().isLength({ max: 500 }),
+], (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ error: errors.array()[0].msg });
+  const { reason, details, reportedSocketId } = req.body;
+  db.addReport({ reason, details, reportedSocketId, reporterName: req.user?.username || "Anonymous", reporterId: req.user?.id || null });
+  res.json({ success: true, message: "Report submitted. Thank you for keeping Straniq safe!" });
+});
+
+module.exports = router;
